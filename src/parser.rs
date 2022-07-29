@@ -1,6 +1,9 @@
 //! Parser parses numbers represented in scientific format.
 
+#[cfg(feature = "std")]
 use std::str::Chars;
+#[cfg(not(feature = "std"))]
+use core::str::Chars;
 use crate::defs::{DECIMAL_SIGN_POS, DECIMAL_SIGN_NEG, DECIMAL_POSITIONS};
 
 pub struct ParserState<'a> {
@@ -205,6 +208,8 @@ mod tests {
     #[test]
     pub fn test_parser() {
 
+        let mut buf = [0u8; 64];
+
         // combinations of possible valid components of a number and expected resulting characteristics.
         let mantissas = ["0.0", "0", ".000", "00.", "00123", "456.", "789.012", ".3456", "0.0078"];
         let expected_mantissas = [
@@ -237,7 +242,7 @@ mod tests {
                     let s = signs[i];
                     let m = mantissas[j];
                     let e = exponents[k];
-                    let numstr = (s.to_owned() + m).to_owned() + e;
+                    let numstr = crate::util::concat_str(&mut buf, &[s, m, e]);
 
                     let ps = parse(&numstr);
 
@@ -262,7 +267,7 @@ mod tests {
         for i in 0..signs.len() {
             for inf in infs {
                 let s = signs[i];
-                let numstr = s.to_owned() + inf;
+                let numstr = crate::util::concat_str(&mut buf, &[s, inf]);
 
                 let ps = parse(&numstr);
 

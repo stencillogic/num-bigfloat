@@ -1,4 +1,4 @@
-//! Multiple precision floating point numbers implemented purely in Rust. 
+//! Increased precision floating point numbers implemented purely in Rust. 
 //! Number has fixed-size mantissa and exponent, but increased precision compared to f32 or f64 values.
 //!
 //! Number characteristics:
@@ -19,7 +19,7 @@
 //! 
 //! // compute pi: pi = 6*arctan(1/sqrt(3))
 //! # #[cfg(feature = "std")] {
-//! let six: BigFloat = 6.0.into(); // note: conversion from f64,f32 are not loss-less.
+//! let six: BigFloat = 6.0.into();
 //! let three: BigFloat = BigFloat::parse("3.0").unwrap();
 //! let pi = six * (ONE / three.sqrt()).atan();
 //! let epsilon = 1.0e-38.into();
@@ -42,7 +42,7 @@
 //! let six: BigFloat = BigFloat::from_u8(6);
 //! let three: BigFloat = BigFloat::from_u8(3);
 //! let pi = six.mul(&ONE.div(&three.sqrt()).atan());
-//! let epsilon = BigFloat::from_f64(1.0e-38);
+//! let epsilon = BigFloat::from_f64(1.0e-38);  // note: conversion from f64,f32 are not loss-less for `no_std`.
 //! 
 //! assert!(pi.sub(&PI).abs().cmp(&epsilon).unwrap() < 0);
 //! ```
@@ -57,8 +57,8 @@ mod defs;
 mod inc;
 mod ops;
 mod ext;
+mod util;
 
-#[cfg(feature = "std")]
 mod parser;
 
 pub use crate::defs::RoundingMode;
@@ -159,10 +159,10 @@ mod tests {
             let f: f64 = random_f64_exp(50, 25);
             if f.is_finite() && f != 0.0 {
                 d1 = BigFloat::from_f64(f);
-                assert!((d1.to_f64() / f - 1.0).abs() < 100.0*f64::EPSILON);
+                assert!(d1.to_f64() == f);
                 if (f as f32).is_finite() && (f as f32) != 0.0 {
                     d1 = BigFloat::from_f32(f as f32);
-                    assert!((d1.to_f32() / f as f32 - 1.0).abs() < 100.0*f32::EPSILON);
+                    assert!(d1.to_f32() == f as f32);
                 }
             }
         }
@@ -308,8 +308,8 @@ mod tests {
         // fract & int
         let f1 = 12345.6789;
         d1 = BigFloat::from_f64(f1);
-        assert!((d1.frac().to_f64() - f1.fract()).abs() < 100000.0*f64::EPSILON);
-        assert!((d1.int().to_f64() - (f1 as u64) as f64).abs() < 100000.0*f64::EPSILON);
+        assert!((d1.frac().to_f64() - f1.fract()).abs() < 10000.0*f64::EPSILON);
+        assert!((d1.int().to_f64() - (f1 as u64) as f64).abs() < 10000.0*f64::EPSILON);
 
         let f1 = -0.006789;
         d1 = BigFloat::from_f64(f1);

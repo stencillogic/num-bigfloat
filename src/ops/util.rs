@@ -306,22 +306,5 @@ impl BigFloatNum {
         }
         false
     }
-
-    #[cfg(not(feature="std"))]
-    /// If exponent is too small try to present number in subnormal form.
-    /// If not successful, then return 0.0
-    pub(crate) fn process_subnormal(&mut self, e: i32) -> Self {
-        if (DECIMAL_POSITIONS as i32) + e > crate::defs::DECIMAL_MIN_EXPONENT as i32 {
-            // subnormal
-            let shift = (crate::defs::DECIMAL_MIN_EXPONENT as i32 - e) as usize;
-            Self::shift_right(&mut self.m, shift);
-            self.n -= shift as i16;
-            self.e = crate::defs::DECIMAL_MIN_EXPONENT;
-            *self
-        } else {
-            // zero
-            Self::new()
-        }
-    }
 }
 

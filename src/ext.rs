@@ -3,6 +3,10 @@
 
 use crate::defs::{BigFloatNum, Error, DECIMAL_SIGN_POS, DECIMAL_PARTS, DECIMAL_SIGN_NEG, DECIMAL_POSITIONS,
     DECIMAL_MAX_EXPONENT, DECIMAL_MIN_EXPONENT, RoundingMode};
+use crate::util::WritableBuf;
+
+#[cfg(feature="std")]
+use std::fmt::Write;
 
 /// Maximum value possible.
 pub const MAX: BigFloat = BigFloat {inner: Flavor::Value(crate::defs::MAX)};
@@ -104,16 +108,10 @@ impl BigFloat {
             Self::parse(&strepr).unwrap()
         }
         #[cfg(not(feature = "std"))] {
-            let inner = match BigFloatNum::from_f64(f) {
-                Err(e) => match e {
-                    Error::ExponentOverflow(s) => Flavor::Inf(s),
-                    _ => Flavor::NaN,
-                },
-                Ok(v) => Flavor::Value(v),
-            };
-            BigFloat {
-                inner
-            }
+            let mut buf = [0u8; 64];
+            let mut strepr = WritableBuf::new(&mut buf); // sign + number + dot + "e" + sign + exponent
+            write!(strepr, "{:e}", f).unwrap();
+            Self::parse(core::str::from_utf8(&buf).unwrap()).unwrap()
         }
     }
 
@@ -126,7 +124,14 @@ impl BigFloat {
     /// Converts BigFloat to f64.
     pub fn to_f64(&self) -> f64 {
         match self.inner {
-            Flavor::Value(v) => v.to_f64(),
+            Flavor::Value(_) => {
+                let mut buf = [0; 64];
+                let mut w = WritableBuf::new(&mut buf);
+                self.write_str(&mut w).unwrap();
+                let written_len = w.len();
+                let s = core::str::from_utf8(&buf[0..written_len]).unwrap();
+                str::parse::<f64>(s).unwrap()
+            },
             Flavor::Inf(s) => if s == DECIMAL_SIGN_POS {
                 f64::INFINITY
             } else {
@@ -138,15 +143,7 @@ impl BigFloat {
 
     /// Converts BigFloat to f32.
     pub fn to_f32(&self) -> f32 {
-        match self.inner {
-            Flavor::Value(v) => v.to_f32(),
-            Flavor::Inf(s) => if s == DECIMAL_SIGN_POS {
-                f32::INFINITY
-            } else {
-                f32::NEG_INFINITY
-            },
-            Flavor::NaN => f32::NAN,
-        }
+        self.to_f64() as f32
     }
 
     /// Returns the mantissa of the BigFloat in `bytes`. Each byte represents a decimal digit.
@@ -686,7 +683,6 @@ impl BigFloat {
     /// let n = BigFloat::parse("NaN").unwrap();
     /// assert!(n.to_f64().is_nan());
     /// ```
-    #[cfg(feature = "std")]
     pub fn parse(s: &str) -> Option<Self> {
         let ps = crate::parser::parse(s);
         if ps.is_valid() {
@@ -721,6 +717,56 @@ impl BigFloat {
             }
         } else {
             None
+        }
+    }
+
+    fn write_str<T: Write>(&self, w: &mut T) -> Result<(), core::fmt::Error> {
+        match self.inner {
+            Flavor::Value(v) => {
+                if v.is_zero() {
+                    w.write_str("0.0")
+                } else {
+                    let part1 = if v.sign == DECIMAL_SIGN_NEG {
+                        "-"
+                    } else {
+                        ""
+                    };
+                    let mut bytes = [0; DECIMAL_POSITIONS];
+                    v.get_mantissa_bytes(&mut bytes);
+                    let len = v.get_mantissa_len();
+                    let mut part2 = [48u8; DECIMAL_POSITIONS + 1];
+                    part2[0] = bytes[0] + 48;
+                    part2[1] = 46;
+                    for i in 1..len {
+                        part2[i + 1] = bytes[i] + 48;
+                    }
+                    let part2: &str = core::str::from_utf8_mut(&mut part2).unwrap();
+                    let mut buf = [0u8; 64];
+                    let s = crate::util::concat_str(&mut buf, &[part1, part2]);
+                    let e = v.n as i32 + v.e as i32 - 1;
+                    if e != 0 {
+                        let exp_sign = if e > 0 {
+                            "+"
+                        } else {
+                            ""
+                        };
+                        w.write_fmt(format_args!("{}e{}{}", s, exp_sign, e))
+                    } else {
+                        w.write_str(s)
+                    }
+                }
+            },
+            Flavor::Inf(sign) => {
+                let s = if sign == DECIMAL_SIGN_NEG {
+                    "-Inf"
+                } else {
+                    "Inf"
+                };
+                w.write_str(s)
+            },
+            crate::ext::Flavor::NaN => {
+                w.write_str("NaN")
+            },
         }
     }
 }
@@ -794,12 +840,8 @@ pub mod std_ops {
 
     use crate::ONE;
     use crate::ZERO;
-    use crate::defs::DECIMAL_POSITIONS;
-    use crate::defs::DECIMAL_SIGN_NEG;
     use crate::NAN;
     use crate::BigFloat;
-    
-    use super::Flavor;
 
     use std::iter::Product;
     use std::iter::Sum;
@@ -987,47 +1029,7 @@ pub mod std_ops {
 
     impl Display for BigFloat {
         fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
-            let s = match self.inner {
-                Flavor::Value(v) => {
-                    if v.is_zero() {
-                        "0".to_owned()
-                    } else {
-                        let mut num = if v.sign == DECIMAL_SIGN_NEG {
-                            "-".to_owned()
-                        } else {
-                            "".to_owned()
-                        };
-                        let mut bytes = [0; DECIMAL_POSITIONS];
-                        v.get_mantissa_bytes(&mut bytes);
-                        let len = v.get_mantissa_len();
-                        num.push(std::char::from_digit(bytes[0] as u32, 10).unwrap());
-                        num += ".";
-                        for byte in &bytes[1..len] {
-                            num.push(std::char::from_digit(*byte as u32, 10).unwrap());
-                        }
-                        let e = v.n as i32 + v.e as i32 - 1;
-                        if e != 0 {
-                            num.push('e');
-                            if e > 0 {
-                                num.push('+');
-                            }
-                            num += &e.to_string();
-                        }
-                        num
-                    }
-                },
-                Flavor::Inf(sign) => {
-                    if sign == DECIMAL_SIGN_NEG {
-                        "-Inf".to_owned()
-                    } else {
-                        "Inf".to_owned()
-                    }
-                },
-                crate::ext::Flavor::NaN => {
-                    "NaN".to_owned()
-                },
-            };
-            write!(f, "{}", s)
+            self.write_str(f)
         }
     }
 

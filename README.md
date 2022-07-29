@@ -1,6 +1,6 @@
 ![Rust](https://github.com/stencillogic/num-bigfloat/workflows/Rust/badge.svg)
 
-Multiple precision floating point numbers implemented purely in Rust. 
+Increased precision floating point numbers implemented purely in Rust. 
 
 ## Rationale
 
@@ -32,4 +32,4 @@ Library can be used without the standard Rust library. This can be achieved by t
 ## Performance
 
 Currently `num-bigfloat` does not outperform more older and mature libraries, but work is underway to make it faster.
-Here you can find comparison with `rug`/`MPFR`: [bigfloat-bench](https://github.com/stencillogic/bigfloat-bench).
+Here you can find comparison with `rug`(`MPFR`): [bigfloat-bench](https://github.com/stencillogic/bigfloat-bench).
