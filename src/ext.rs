@@ -8,6 +8,9 @@ use crate::util::WritableBuf;
 #[cfg(feature="std")]
 use std::fmt::Write;
 
+#[cfg(not(feature="std"))]
+use core::fmt::Write;
+
 /// Maximum value possible.
 pub const MAX: BigFloat = BigFloat {inner: Flavor::Value(crate::defs::MAX)};
 
