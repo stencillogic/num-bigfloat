@@ -29,7 +29,11 @@ Number has fixed-size mantissa and exponent.
 Library can be used without the standard Rust library. This can be achieved by turning off `std` feature.
 
 
+## Arbitrary precision numbers
+
+A fork of the library is available that implements floating-point numbers of arbitrary precision: [astro-float](https://github.com/stencillogic/astro-float)
+
+
 ## Performance
 
-Currently `num-bigfloat` does not outperform more older and mature libraries, but work is underway to make it faster.
-Here you can find comparison with `rug`(`MPFR`): [bigfloat-bench](https://github.com/stencillogic/bigfloat-bench).
+Benchmark for `num-bigfloat`, `rug`(`MPFR`), and `astro-float` can be found here: [bigfloat-bench](https://github.com/stencillogic/bigfloat-bench).
