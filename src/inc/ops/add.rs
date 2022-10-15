@@ -151,17 +151,15 @@ impl BigFloatInc {
         let mut s: u32;
         let mut c: u32 = 0;
 
-        let mut i: usize = 0;
-        while i < DECIMAL_PARTS {
-            s = d1[i] as u32 + d2[i] as u32 + c;
+        for ((v1, v2), v3) in d1.iter().zip(d2.iter()).zip(d3.iter_mut()) {
+            s = *v1 as u32 + *v2 as u32 + c;
             if s >= DECIMAL_BASE as u32 {
                 s -= DECIMAL_BASE as u32;
                 c = 1;
             } else {
                 c = 0;
             }
-            d3[i] = s as i16;
-            i += 1;
+            *v3 = s as i16;
         }
         c
     }
@@ -170,16 +168,14 @@ impl BigFloatInc {
     // d1 is supposed to be > d2
     fn abs_sub(d1: &[i16], d2: &[i16], d3: &mut [i16]) {
         let mut c: i16 = 0;
-        let mut i: usize = 0;
-        while i < DECIMAL_PARTS {
-            if d1[i] < d2[i] + c {
-                d3[i] = d1[i] + DECIMAL_BASE as i16 - d2[i] - c;
+        for ((v1, v2), v3) in d1.iter().zip(d2.iter()).zip(d3.iter_mut()) {
+            if *v1 < *v2 + c {
+                *v3 = *v1 + DECIMAL_BASE as i16 - *v2 - c;
                 c = 1;
             } else {
-                d3[i] = d1[i] - d2[i] - c;
+                *v3 = *v1 - *v2 - c;
                 c = 0;
             }
-            i += 1;
         }
         assert!(0 == c);
     }

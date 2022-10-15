@@ -33,22 +33,22 @@ impl BigFloatInc {
             return Ok(Self::new());
         }
 
-        for i in 0..DECIMAL_PARTS {
-            d1mi = self.m[i] as i32;
+        for (i, v1) in self.m.iter().enumerate() {
+
+            d1mi = *v1 as i32;
             if d1mi == 0 {
                 continue;
             }
 
             k = 0;
-            let mut j = 0;
-            while j < DECIMAL_PARTS {
-                m = d1mi * (d2.m[j] as i32) + m3[i + j] as i32 + k;
+            for (m2j, m3ij) in d2.m.iter().zip(m3[i..].iter_mut()) {
+                m = d1mi * (*m2j as i32) + *m3ij as i32 + k;
 
-                m3[i + j] = (m % DECIMAL_BASE as i32) as i16;
+                *m3ij = (m % DECIMAL_BASE as i32) as i16;
                 k = m / DECIMAL_BASE as i32;
-                j += 1;
             }
-            m3[i + j] += k as i16;
+
+            m3[i + d2.m.len()] += k as i16;
         }
 
         n = Self::num_digits(&m3[DECIMAL_PARTS..]) as i32;
@@ -164,34 +164,30 @@ impl BigFloatInc {
                 p -= 1;
             }
 
-            while i >= 0 {
-                qh = rh * DECIMAL_BASE as i32 + if j >= 0 { self.m[j as usize] as i32 } else { 0 };
+            let mut m3i = m3.iter_mut().rev();
+            let mut m1i = self.m[..j as usize+1].iter().rev();
+            for m3v in m3i.by_ref() {
+                qh = rh * DECIMAL_BASE as i32 + if j >= 0 { *m1i.next().unwrap() as i32 } else { 0 };
                 rh = qh % d;
-                m3[i as usize] = (qh / d) as i16;
+                *m3v = (qh / d) as i16;
 
                 if rh == 0 && j <= 0 {
                     break;
                 }
 
                 j -= 1;
-                i -= 1;
             }
 
-            while i > 0 {
-                i -= 1;
-                m3[i as usize] = 0;
+            for m3v in m3i {
+                *m3v = 0;
             }
         } else {
             // normalize: n1 = d1 * d, n2 = d2 * d
             d = DECIMAL_BASE as i32 / (d2.m[n as usize] as i32 + 1); // factor d: d * d2[most significant] is close to DECIMAL_BASE
 
             if d == 1 {
-                for w in 0..self.m.len() {
-                    buf[n1 + w] = self.m[w];
-                }
-                for w in 0..d2.m.len() {
-                    buf[n2 + w] = d2.m[w];
-                }
+                buf[n1..(self.m.len() + n1)].copy_from_slice(&self.m[..]);
+                buf[n2..(d2.m.len() + n2)].copy_from_slice(&d2.m[..]);
             } else {
                 Self::mul_by_digit(&self.m, d, &mut buf[n1..]);
                 Self::mul_by_digit(&d2.m, d, &mut buf[n2..]);
@@ -201,38 +197,43 @@ impl BigFloatInc {
             v2 = buf[n2 + n as usize - 1] as i32;
 
             j = m - n;
+            let mut m3i = m3.iter_mut().rev();
             loop {
+
                 n1j = (n1 as i32 + j) as usize;
-                qh = buf[n1j + n as usize + 1] as i32 * DECIMAL_BASE as i32
-                    + buf[n1j + n as usize] as i32;
+
+                let b2 = buf[n1j + n as usize + 1];
+                let b1 = buf[n1j + n as usize];
+                let b0 = buf[n1j + n as usize - 1];
+
+                qh = b2 as i32 * DECIMAL_BASE as i32 + b1 as i32;
                 rh = qh % v1;
                 qh /= v1;
 
                 if qh >= DECIMAL_BASE as i32
-                    || (qh * v2 > DECIMAL_BASE as i32 * rh + buf[n1j + n as usize - 1] as i32)
+                    || (qh * v2 > DECIMAL_BASE as i32 * rh + b0 as i32)
                 {
                     qh -= 1;
                     rh += v1;
-                    if rh < DECIMAL_BASE as i32 {
-                        if qh >= DECIMAL_BASE as i32
-                            || (qh * v2
-                                > DECIMAL_BASE as i32 * rh + buf[n1j + n as usize - 1] as i32)
-                        {
-                            qh -= 1;
-                        }
+                    if rh < DECIMAL_BASE as i32
+                        && (qh >= DECIMAL_BASE as i32 
+                            || (qh * v2 > DECIMAL_BASE as i32 * rh + b0 as i32)) {
+                        qh -= 1;
                     }
                 }
 
                 // n1_j = n1_j - n2 * qh
                 c = 0;
                 k = 0;
-                for l in 0..n + 2 {
-                    k = buf[n2 + l as usize] as i32 * qh + k / DECIMAL_BASE as i32;
-                    buf[n1j + l as usize] -= (k % DECIMAL_BASE as i32) as i16 + c;
-                    if buf[n1j + l as usize] < 0 {
-                        buf[n1j + l as usize] += DECIMAL_BASE as i16;
+                let (buf1, buf2) = buf.split_at_mut(n2);
+                for (a, b) in buf2[..(n+2) as usize].iter().zip(buf1[n1j..n1j+(n+2) as usize].iter_mut()) {
+                    k = *a as i32 * qh + k / DECIMAL_BASE as i32;
+                    let val = k % DECIMAL_BASE as i32 + c as i32;
+                    if (*b as i32) < val {
+                        *b += (DECIMAL_BASE as i32 - val) as i16;
                         c = 1;
                     } else {
+                        *b -= val as i16;
                         c = 0;
                     }
                 }
@@ -241,10 +242,10 @@ impl BigFloatInc {
                     // compensate
                     qh -= 1;
                     c = 0;
-                    for l in 0..n + 2 {
-                        buf[n1j + l as usize] += buf[n2 + l as usize] + c;
-                        if buf[n1j + l as usize] >= DECIMAL_BASE as i16 {
-                            buf[n1j + l as usize] -= DECIMAL_BASE as i16;
+                    for (a, b) in buf2[..(n+2) as usize].iter().zip(buf1[n1j..n1j+(n+2) as usize].iter_mut()) {
+                        *b += *a + c;
+                        if *b >= DECIMAL_BASE as i16 {
+                            *b -= DECIMAL_BASE as i16;
                             c = 1;
                         } else {
                             c = 0;
@@ -254,7 +255,7 @@ impl BigFloatInc {
                 }
 
                 if i < DECIMAL_PARTS as i32 || qh > 0 {
-                    m3[i as usize] = qh as i16;
+                    *m3i.next().unwrap() = qh as i16;
                     i -= 1;
                 } else {
                     p -= 1;
