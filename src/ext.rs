@@ -11,6 +11,9 @@ use std::fmt::Write;
 #[cfg(not(feature="std"))]
 use core::fmt::Write;
 
+#[cfg(feature="rand")]
+use rand::random;
+
 #[cfg(feature="serde")]
 use serde::{Serialize, Deserialize};
 
@@ -776,6 +779,44 @@ impl BigFloat {
                 w.write_str("NaN")
             },
         }
+    }
+
+
+    /// Returns a random normalized (not subnormal) BigFloat number with exponent in the range
+    /// from `exp_from` to `exp_to` inclusive. The sign can be positive and negative. Zero is excluded.
+    /// Function does not follow any specific distribution law.
+    /// The intended use of this function is for testing.
+    /// 
+    /// # Errors
+    /// 
+    /// InvalidArgument - when `exp_from` is greater than `exp_to`.
+    #[cfg(feature = "rand")]
+    pub fn random_normal(exp_from: i8, exp_to: i8) -> Result<Self, Error> {
+
+        if exp_from > exp_to {
+            return Err(Error::InvalidArgument);
+        }
+
+        // build mantissa
+        let mut mantissa = [0i16; DECIMAL_PARTS];
+        for v in mantissa.iter_mut() {
+            *v = (random::<u16>() % crate::defs::DECIMAL_BASE as u16) as i16;
+        }
+
+        if mantissa[DECIMAL_PARTS - 1] == 0 {
+            mantissa[DECIMAL_PARTS - 1] = (crate::defs::DECIMAL_BASE - 1) as i16;
+        }
+
+        while mantissa[DECIMAL_PARTS - 1] / 1000 == 0 {
+            mantissa[DECIMAL_PARTS - 1] *= 10;
+        }
+
+        // sign & exponent
+        let sign = if random::<i8>() & 1 == 0 { DECIMAL_SIGN_POS } else { DECIMAL_SIGN_NEG };
+        let exp_range = (exp_to - exp_from) as i32;
+        let exp = (if exp_range != 0 { random::<i32>().abs() % exp_range } else { 0 }) as i8 + exp_from;
+
+        Ok(BigFloat::from_raw_parts(mantissa, DECIMAL_POSITIONS as i16, sign, exp))
     }
 }
 
@@ -1608,5 +1649,31 @@ mod serde_tests {
 
         assert!(d1.cmp(&d2).unwrap() == 0);
     }
+}
 
+#[cfg(feature="rand")]
+#[cfg(test)]
+mod rand_tests {
+
+    use super::*;
+
+    #[test]
+    fn test_rand() {
+
+        for _ in 0..1000 {
+
+            let exp_from = rand::random::<i8>();
+            let exp_shift = if DECIMAL_MAX_EXPONENT > exp_from {
+                rand::random::<u8>() % (DECIMAL_MAX_EXPONENT - exp_from) as u8
+            } else {
+                0
+            };
+            let exp_to = exp_from + exp_shift as i8;
+
+            let n = BigFloat::random_normal(exp_from, exp_to).unwrap();
+
+            assert!(!n.is_subnormal());
+            assert!(n.get_exponent() >= exp_from && n.get_exponent() <= exp_to);
+        }
+    }
 }

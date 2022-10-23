@@ -50,6 +50,12 @@
 //! ## no_std
 //!
 //! Library can be used without the standard Rust library. This can be achieved by turning off `std` feature.
+//! 
+//! ## Other features
+//! 
+//! The library depends on [rand](https://crates.io/crates/rand) which is used by `BigFloat::random_normal`. This dependecy can be excluded by turning off the `rand` feature.
+//! 
+//! In addition, the library depends on [serde](https://crates.io/crates/serde) which is also optional and can be eliminated by turning off the `serde` feature.
 
 #![deny(clippy::suspicious)]
 

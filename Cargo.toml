@@ -16,11 +16,13 @@ serde_json = "1.0"
 
 [dependencies]
 serde = { version = "~1.0.147", optional = true, default-features = false, features = ['derive'] }
+rand = { version = "~0.8.5", optional = true, default-features = false }
 
 [features]
-default = ["std", "serde"]
-std = ["serde/std"]
+default = ["std", "serde", "rand"]
+std = ["serde/std", "rand/std", "rand/std_rng"]
 serde = ["dep:serde"]
+rand = ["dep:rand", "std"]
 
 [profile.release]
 opt-level = 3
