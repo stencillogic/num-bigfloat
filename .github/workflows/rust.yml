@@ -20,3 +20,5 @@ jobs:
       run: cargo build --release --verbose
     - name: Run tests
       run: cargo test --release --verbose
+    - name: Run tests with no features and with no_std
+      run: cargo test --release --verbose --no-default-features
