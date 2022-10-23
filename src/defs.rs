@@ -1,10 +1,14 @@
 //!  Definitions.
 
+#[cfg(feature="serde")]
+use serde::{Serialize, Deserialize};
+
 /// Number of "digits" in BigFloat number.
 pub const DECIMAL_PARTS: usize = 10;
 
 /// Number representation.
 #[derive(Copy, Clone, Debug)]
+#[cfg_attr(feature="serde", derive(Serialize, Deserialize))]
 pub struct BigFloatNum {
     pub (crate) sign: i8,                // sign
     pub (crate) e: i8,                   // exponent

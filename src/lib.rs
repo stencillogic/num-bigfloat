@@ -53,12 +53,13 @@
 
 #![deny(clippy::suspicious)]
 
+#![cfg_attr(not(feature = "std"), no_std)]
+
 mod defs;
 mod inc;
 mod ops;
 mod ext;
 mod util;
-
 mod parser;
 
 pub use crate::defs::RoundingMode;

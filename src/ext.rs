@@ -11,6 +11,9 @@ use std::fmt::Write;
 #[cfg(not(feature="std"))]
 use core::fmt::Write;
 
+#[cfg(feature="serde")]
+use serde::{Serialize, Deserialize};
+
 /// Maximum value possible.
 pub const MAX: BigFloat = BigFloat {inner: Flavor::Value(crate::defs::MAX)};
 
@@ -63,11 +66,13 @@ pub const HALF_PI: BigFloat = BigFloat { inner: Flavor::Value(BigFloatNum {
 
 /// Number representation.
 #[derive(Copy, Clone, Debug)]
+#[cfg_attr(feature="serde", derive(Serialize, Deserialize))]
 pub struct BigFloat {
     inner: Flavor,
 }
 
 #[derive(Copy, Clone, Debug)]
+#[cfg_attr(feature="serde", derive(Serialize, Deserialize))]
 enum Flavor {
     Value(BigFloatNum),
     NaN,
@@ -1569,4 +1574,39 @@ mod tests {
         assert!(BigFloat::from_i128(-123456789012345678901234567890123456789) == BigFloat::parse("-1.23456789012345678901234567890123456789e+38").unwrap());
         assert!(BigFloat::from_u128(123456789012345678901234567890123456789) == BigFloat::parse("1.23456789012345678901234567890123456789e+38").unwrap());
     }
+}
+
+
+#[cfg(feature="serde")]
+#[cfg(test)]
+mod serde_tests {
+
+    use super::*;
+
+    #[test]
+    fn test_serde() {
+
+        let d1 = E;
+
+        let json = serde_json::to_string(&d1).unwrap();
+
+        assert_eq!("{\"inner\":{\"Value\":{\"sign\":1,\"e\":-39,\"n\":40,\"m\":[7757,6249,3526,7471,6028,2353,9045,2845,2818,2718]}}}", json);
+
+        let json = "{
+            \"inner\": {
+                \"Value\": {
+                    \"sign\": -1,
+                    \"e\": -39,
+                    \"n\": 40,
+                    \"m\": [7757, 6249, 3526, 7471, 6028, 2353, 9045, 2845, 2818, 2718]
+                }
+            }
+        }";
+
+        let d1 = d1.inv_sign();
+        let d2: BigFloat = serde_json::from_str(json).unwrap();
+
+        assert!(d1.cmp(&d2).unwrap() == 0);
+    }
+
 }
