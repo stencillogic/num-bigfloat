@@ -68,6 +68,9 @@ mod ext;
 mod util;
 mod parser;
 
+#[cfg(feature="serde")]
+pub mod serde;
+
 pub use crate::defs::RoundingMode;
 pub use crate::ext::BigFloat;
 pub use crate::ext::MAX;
@@ -85,7 +88,6 @@ pub use crate::ext::TWO;
 pub use crate::ext::E;
 pub use crate::ext::PI;
 pub use crate::ext::HALF_PI;
-
 
 #[cfg(test)]
 mod tests {

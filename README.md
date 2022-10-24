@@ -1,4 +1,6 @@
-![Rust](https://github.com/stencillogic/num-bigfloat/workflows/Rust/badge.svg)
+![Tests](https://github.com/stencillogic/num-bigfloat/workflows/Rust/badge.svg)
+![Minimum rustc version](https://img.shields.io/badge/rustc-1.62.1+-lightgray.svg)
+
 
 Increased precision floating point numbers implemented purely in Rust. 
 

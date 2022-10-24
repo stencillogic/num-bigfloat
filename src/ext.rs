@@ -731,7 +731,7 @@ impl BigFloat {
         }
     }
 
-    fn write_str<T: Write>(&self, w: &mut T) -> Result<(), core::fmt::Error> {
+    pub(crate) fn write_str<T: Write>(&self, w: &mut T) -> Result<(), core::fmt::Error> {
         match self.inner {
             Flavor::Value(v) => {
                 if v.is_zero() {
