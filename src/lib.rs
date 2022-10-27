@@ -68,10 +68,15 @@ mod ext;
 mod util;
 mod parser;
 
+
+#[cfg(feature="num-traits")]
+mod num_traits;
+
 #[cfg(feature="serde")]
 pub mod serde;
 
 pub use crate::defs::RoundingMode;
+pub use crate::defs::Error;
 pub use crate::ext::BigFloat;
 pub use crate::ext::MAX;
 pub use crate::ext::MAX_EXP;

@@ -2,7 +2,7 @@
 //! values, and implementation of `std::ops` traits.
 
 use crate::defs::{BigFloatNum, Error, DECIMAL_SIGN_POS, DECIMAL_PARTS, DECIMAL_SIGN_NEG, DECIMAL_POSITIONS,
-    DECIMAL_MAX_EXPONENT, DECIMAL_MIN_EXPONENT, RoundingMode};
+    DECIMAL_MAX_EXPONENT, DECIMAL_MIN_EXPONENT, RoundingMode, DECIMAL_BASE_LOG10, DECIMAL_BASE, I64_MAX, I64_MIN, U64_MAX, I128_MIN, I128_MAX, U128_MAX};
 use crate::util::WritableBuf;
 
 #[cfg(feature="std")]
@@ -155,6 +155,130 @@ impl BigFloat {
     /// Converts BigFloat to f32.
     pub fn to_f32(&self) -> f32 {
         self.to_f64() as f32
+    }
+
+    /// Converts BigFloat to i64. 
+    /// The function retursn None if `self` is Inf, NaN, or out of range of i64.
+    pub fn to_i64(&self) -> Option<i64> {
+        self.to_int::<i64>(&I64_MIN, &I64_MAX)
+    }
+
+    /// Converts BigFloat to i128. 
+    /// The function retursn None if `self` is Inf, NaN, or out of range of i128.
+    pub fn to_i128(&self) -> Option<i128> {
+        self.to_int::<i128>(&I128_MIN, &I128_MAX)
+    }
+
+    /// Converts absolute value of `self` to u64. 
+    /// The function retursn None if `self` is Inf, NaN, or out of range of u64.
+    pub fn to_u64(&self) -> Option<u64> {
+        self.to_uint::<u64>(&U64_MAX)
+    }
+
+    /// Converts absolute value of `self` to u128. 
+    /// The function retursn None if `self` is Inf, NaN, or out of range of u128.
+    pub fn to_u128(&self) -> Option<u128> {
+        self.to_uint::<u128>(&U128_MAX)
+    }
+
+    fn to_int<T>(&self, min: &BigFloatNum, max: &BigFloatNum) -> Option<T> 
+    where T: core::ops::DivAssign<T> + core::ops::AddAssign<T> + core::ops::MulAssign<T> 
+            + core::ops::SubAssign<T> + core::convert::From<u32> + core::convert::From<i16> {
+        match self.inner {
+            Flavor::Value(v) => {
+
+                let int = v.int();
+
+                if int.cmp(min) >= 0 && int.cmp(max) <= 0 {
+
+                    let mut ret: T = 0i16.into();
+                    let mut n = int.n as usize + DECIMAL_BASE_LOG10 - 1;
+                    n /= DECIMAL_BASE_LOG10;
+                    let mut miter = int.m[..n].iter().rev();
+                    n *= DECIMAL_BASE_LOG10;
+                    n = (n as i16 + int.e as i16) as usize;
+
+                    while n >= DECIMAL_BASE_LOG10 {
+                        ret *= (DECIMAL_BASE as u32).into();
+                        if v.sign == DECIMAL_SIGN_POS {
+                            ret += (*miter.next().unwrap()).into();
+                        } else {
+                            ret -= (*miter.next().unwrap()).into();
+                        }
+                        n -= DECIMAL_BASE_LOG10;
+                    }
+
+                    if n > 0 {
+                        let mut d: T = (DECIMAL_BASE as u32).into();
+                        while n > 0 {
+                            d /= 10i16.into();
+                            n -= 1;
+                        }
+                        let mut p: T = (*miter.next().unwrap()).into();
+                        p /= d;
+                        if v.sign == DECIMAL_SIGN_POS {
+                            ret += p;
+                        } else {
+                            ret -= p;
+                        }
+                    }
+
+                    Some(ret)
+
+                } else {
+
+                    None
+                }
+            },
+            Flavor::Inf(_) => None,
+            Flavor::NaN => None,
+        }
+    }
+
+    fn to_uint<T>(&self, max: &BigFloatNum) -> Option<T> 
+    where T: core::ops::DivAssign<T> + core::ops::AddAssign<T> + core::ops::MulAssign<T> 
+            + core::convert::From<u32> + core::convert::From<u16> {
+        match self.inner {
+            Flavor::Value(v) => {
+
+                let int = v.int().abs();
+
+                if int.cmp(max) <= 0 {
+
+                    let mut ret: T = 0u16.into();
+                    let mut n = int.n as usize + DECIMAL_BASE_LOG10 - 1;
+                    n /= DECIMAL_BASE_LOG10;
+                    let mut miter = int.m[..n].iter().rev();
+                    n *= DECIMAL_BASE_LOG10;
+                    n = (n as i16 + int.e as i16) as usize;
+
+                    while n >= DECIMAL_BASE_LOG10 {
+                        ret *= (DECIMAL_BASE as u32).into();
+                        ret += (*miter.next().unwrap() as u16).into();
+                        n -= DECIMAL_BASE_LOG10;
+                    }
+
+                    if n > 0 {
+                        let mut d: T = (DECIMAL_BASE as u32).into();
+                        while n > 0 {
+                            d /= 10u16.into();
+                            n -= 1;
+                        }
+                        let mut p: T = (*miter.next().unwrap() as u16).into();
+                        p /= d;
+                        ret += p;
+                    }
+
+                    Some(ret)
+
+                } else {
+
+                    None
+                }
+            },
+            Flavor::Inf(_) => None,
+            Flavor::NaN => None,
+        }
     }
 
     /// Returns the mantissa of the BigFloat in `bytes`. Each byte represents a decimal digit.
@@ -813,8 +937,8 @@ impl BigFloat {
 
         // sign & exponent
         let sign = if random::<i8>() & 1 == 0 { DECIMAL_SIGN_POS } else { DECIMAL_SIGN_NEG };
-        let exp_range = (exp_to - exp_from) as i32;
-        let exp = (if exp_range != 0 { random::<i32>().abs() % exp_range } else { 0 }) as i8 + exp_from;
+        let exp_range = exp_to as i32 - exp_from  as i32;
+        let exp = (if exp_range != 0 { random::<i32>().abs() % exp_range } else { 0 } + exp_from as i32) as i8;
 
         Ok(BigFloat::from_raw_parts(mantissa, DECIMAL_POSITIONS as i16, sign, exp))
     }
@@ -910,6 +1034,7 @@ pub mod std_ops {
     use std::fmt::Display;
     use std::fmt::Formatter;
     use std::str::FromStr;
+    use std::ops::Rem;
     
     //
     // ops traits
@@ -938,6 +1063,13 @@ pub mod std_ops {
     impl DivAssign for BigFloat {
         fn div_assign(&mut self, rhs: Self) {
             *self = BigFloat::div(self, &rhs)
+        }
+    }
+
+    impl Rem for BigFloat {
+        type Output = Self;
+        fn rem(self, rhs: Self) -> Self::Output {
+            self - (self / rhs).int() * rhs
         }
     }
     
@@ -1200,8 +1332,9 @@ impl_int_conv!(i128, u128, from_i128, from_u128, from_int_u128);
 #[cfg(test)]
 mod tests {
 
-    use crate::defs::{DECIMAL_PARTS, RoundingMode};
-    use crate::*;
+    use crate::defs::{DECIMAL_PARTS, RoundingMode, I64_MAX, I64_MIN, U64_MAX, I128_MAX, I128_MIN, U128_MAX};
+    use crate::ext::Flavor;
+    use super::*;
 
     #[cfg(feature = "std")]
     use std::str::FromStr;
@@ -1242,19 +1375,72 @@ mod tests {
         let d1 = ONE;
         assert!(d1.to_f64() == 1.0);
         assert!(d1.to_f32() == 1.0);
+        assert!(d1.to_i64() == Some(1));
+        assert!(d1.to_u64() == Some(1));
+        assert!(d1.to_i128() == Some(1));
+        assert!(d1.to_u128() == Some(1));
         let d1 = BigFloat::new().div(&BigFloat::new());
         assert!(d1.to_f64().is_nan());
         assert!(d1.to_f32().is_nan());
+        assert!(d1.to_i64().is_none());
+        assert!(d1.to_u64().is_none());
+        assert!(d1.to_i128().is_none());
+        assert!(d1.to_u128().is_none());
         let d1 = ONE.div(&BigFloat::new());
         assert!(d1.to_f64().is_infinite());
         assert!(d1.to_f32().is_infinite());
         assert!(d1.to_f64().is_sign_positive());
         assert!(d1.to_f32().is_sign_positive());
+        assert!(d1.to_i64().is_none());
+        assert!(d1.to_u64().is_none());
+        assert!(d1.to_i128().is_none());
+        assert!(d1.to_u128().is_none());
         let d1 = d1.inv_sign();
         assert!(d1.to_f64().is_sign_negative());
         assert!(d1.to_f32().is_sign_negative());
         assert!(d1.to_f64().is_infinite());
         assert!(d1.to_f32().is_infinite());
+        assert!(d1.to_i64().is_none());
+        assert!(d1.to_u64().is_none());
+        assert!(d1.to_i128().is_none());
+        assert!(d1.to_u128().is_none());
+
+        let d1 = BigFloat { inner: Flavor::Value(I64_MAX) };
+        assert!(d1.to_i64() == Some(i64::MAX));
+        assert!(d1.add(&ONE).to_i64() == None);
+        let d1 = BigFloat { inner: Flavor::Value(I64_MIN) };
+        assert!(d1.to_i64() == Some(i64::MIN));
+        assert!(d1.sub(&ONE).to_i64() == None);
+        let d1 = BigFloat { inner: Flavor::Value(U64_MAX) };
+        assert!(d1.to_u64() == Some(u64::MAX));
+        assert!(d1.add(&ONE).to_u64() == None);
+        let d1 = BigFloat { inner: Flavor::Value(I128_MAX) };
+        assert!(d1.to_i128() == Some(i128::MAX));
+        assert!(d1.add(&ONE).to_i128() == None);
+        let d1 = BigFloat { inner: Flavor::Value(I128_MIN) };
+        assert!(d1.to_i128() == Some(i128::MIN));
+        assert!(d1.sub(&ONE).to_i128() == None);
+        let d1 = BigFloat { inner: Flavor::Value(U128_MAX) };
+        assert!(d1.to_u128() == Some(u128::MAX));
+        assert!(d1.add(&ONE).to_u128() == None);
+
+        for _ in 0..1000 {
+            let i = rand::random::<i64>();
+            let d1 = BigFloat::from_i64(i);
+            assert!(d1.to_i64() == Some(i));
+
+            let i = rand::random::<u64>();
+            let d1 = BigFloat::from_u64(i);
+            assert!(d1.to_u64() == Some(i));
+
+            let i = rand::random::<i128>();
+            let d1 = BigFloat::from_i128(i);
+            assert!(d1.to_i128() == Some(i));
+
+            let i = rand::random::<u128>();
+            let d1 = BigFloat::from_u128(i);
+            assert!(d1.to_u128() == Some(i));
+        }
 
         let d1 = ONE;
         let mut bytes = [1; DECIMAL_PARTS];
@@ -1664,11 +1850,11 @@ mod rand_tests {
 
             let exp_from = rand::random::<i8>();
             let exp_shift = if DECIMAL_MAX_EXPONENT > exp_from {
-                rand::random::<u8>() % (DECIMAL_MAX_EXPONENT - exp_from) as u8
+                rand::random::<u8>() % (DECIMAL_MAX_EXPONENT as i16 - exp_from as i16) as u8
             } else {
                 0
             };
-            let exp_to = exp_from + exp_shift as i8;
+            let exp_to = (exp_from as i16 + exp_shift as i16) as i8;
 
             let n = BigFloat::random_normal(exp_from, exp_to).unwrap();
 

@@ -196,7 +196,7 @@ impl BigFloatNum {
     }
 
     // factor to divide by to get a digit at position n
-    pub(super) fn get_div_factor(n: i16) -> i16 {
+    pub(crate) fn get_div_factor(n: i16) -> i16 {
         let mut x = n % DECIMAL_BASE_LOG10 as i16;
         let mut t = 1;
         while x > 0 {

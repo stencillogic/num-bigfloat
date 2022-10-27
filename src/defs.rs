@@ -6,6 +6,55 @@ use serde::{Serialize, Deserialize};
 /// Number of "digits" in BigFloat number.
 pub const DECIMAL_PARTS: usize = 10;
 
+/// i64::MAX.
+pub const I64_MAX: BigFloatNum = BigFloatNum {
+    m: [0, 0, 0, 0, 0, 8070, 4775, 3685, 3720, 9223],
+    n: DECIMAL_POSITIONS as i16, 
+    sign: DECIMAL_SIGN_POS, 
+    e: -(DECIMAL_POSITIONS as i8 - 19),
+};
+
+/// i64::MIN.
+pub const I64_MIN: BigFloatNum = BigFloatNum {
+    m: [0, 0, 0, 0, 0, 8080, 4775, 3685, 3720, 9223],
+    n: DECIMAL_POSITIONS as i16, 
+    sign: DECIMAL_SIGN_NEG, 
+    e: -(DECIMAL_POSITIONS as i8 - 19),
+};
+
+/// u64::MAX.
+pub const U64_MAX: BigFloatNum = BigFloatNum {
+    m: [0, 0, 0, 0, 0, 1615, 955, 737, 6744, 1844],
+    n: DECIMAL_POSITIONS as i16, 
+    sign: DECIMAL_SIGN_POS,
+    e: -(DECIMAL_POSITIONS as i8 - 20),
+};
+
+// i128::MAX
+pub const I128_MAX: BigFloatNum = BigFloatNum {
+    m: [7270, 4105, 1588, 3037, 1687, 3173, 4692, 3460, 4118, 1701],
+    n: DECIMAL_POSITIONS as i16, 
+    sign: DECIMAL_SIGN_POS, 
+    e: -1,
+};
+
+
+/// i128::MIN.
+pub const I128_MIN: BigFloatNum = BigFloatNum {
+    m: [7280, 4105, 1588, 3037, 1687, 3173, 4692, 3460, 4118, 1701],
+    n: DECIMAL_POSITIONS as i16, 
+    sign: DECIMAL_SIGN_NEG, 
+    e: -1,
+};
+
+/// u128::MAX.
+pub const U128_MAX: BigFloatNum = BigFloatNum {
+    m: [4550, 8211, 3176, 6074, 3374, 6346, 9384, 6920, 8236, 3402],
+    n: DECIMAL_POSITIONS as i16,
+    sign: DECIMAL_SIGN_POS,
+    e: -1,
+};
+
 /// Number representation.
 #[derive(Copy, Clone, Debug)]
 #[cfg_attr(feature="serde", derive(Serialize, Deserialize))]
