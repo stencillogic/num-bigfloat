@@ -5,58 +5,33 @@ use crate::INF_NEG;
 use crate::INF_POS;
 use crate::MAX;
 use crate::MIN;
-use crate::MIN_POSITIVE;
+use crate::MIN_POSITIVE_NORMAL;
 use crate::NAN;
 use crate::ONE;
-use crate::RoundingMode;
+#[cfg(feature="std")] use crate::PI;
+#[cfg(feature="std")] use crate::RoundingMode;
+#[cfg(feature="std")] use crate::TWO;
 use crate::ZERO;
+#[cfg(not(feature="std"))] use crate::EPSILON;
 use crate::Error;
+#[cfg(not(feature="std"))] use crate::ext::RAD_TO_DEG_FACTOR;
 use num_traits::Num;
 use num_traits::bounds::Bounded;
-use num_traits::float::Float;
+#[cfg(feature="std")] use num_traits::float::Float;
+#[cfg(not(feature="std"))] use num_traits::float::FloatCore;
 use num_traits::float::FloatConst;
-use num_traits::cast::cast;
-use num_traits::cast::AsPrimitive;
 use num_traits::cast::FromPrimitive;
 use num_traits::cast::NumCast;
 use num_traits::cast::ToPrimitive;
-use num_traits::identities::one;
-use num_traits::identities::zero;
 use num_traits::identities::One;
 use num_traits::identities::Zero;
-use num_traits::int::PrimInt;
-use num_traits::ops::checked::CheckedAdd;
-use num_traits::ops::checked::CheckedDiv;
-use num_traits::ops::checked::CheckedMul;
-use num_traits::ops::checked::CheckedNeg;
-use num_traits::ops::checked::CheckedRem;
-use num_traits::ops::checked::CheckedShl;
-use num_traits::ops::checked::CheckedShr;
-use num_traits::ops::checked::CheckedSub;
-use num_traits::ops::euclid::CheckedEuclid;
 use num_traits::ops::euclid::Euclid;
 use num_traits::ops::inv::Inv;
 use num_traits::ops::mul_add::MulAdd;
 use num_traits::ops::mul_add::MulAddAssign;
-use num_traits::ops::saturating::Saturating;
-use num_traits::ops::saturating::SaturatingAdd;
-use num_traits::ops::saturating::SaturatingMul;
-use num_traits::ops::saturating::SaturatingSub;
-use num_traits::ops::wrapping::WrappingAdd;
-use num_traits::ops::wrapping::WrappingMul;
-use num_traits::ops::wrapping::WrappingNeg;
-use num_traits::ops::wrapping::WrappingShl;
-use num_traits::ops::wrapping::WrappingShr;
-use num_traits::ops::wrapping::WrappingSub;
-use num_traits::pow::checked_pow;
-use num_traits::pow::pow;
 use num_traits::pow::Pow;
-use num_traits::sign::abs;
-use num_traits::sign::abs_sub;
-use num_traits::sign::signum;
 use num_traits::sign::Signed;
-use num_traits::sign::Unsigned;
-
+use core::num::FpCategory;
 
 impl Bounded for BigFloat {
 
@@ -124,11 +99,10 @@ impl ToPrimitive for BigFloat {
     }
 }
 
-#[cfg(feature = "std")]
 impl NumCast for BigFloat {
 
     fn from<T: ToPrimitive>(n: T) -> Option<Self> {
-        todo!()
+        n.to_f64().map(BigFloat::from_f64)
     }
 }
 
@@ -147,6 +121,7 @@ impl Float for BigFloat {
         INF_NEG
     }
 
+    /// This function is provided only for compatibility since `-0.0` is not implemented.
     fn neg_zero() -> Self {
         ZERO
     }
@@ -156,7 +131,7 @@ impl Float for BigFloat {
     }
 
     fn min_positive_value() -> Self {
-        MIN_POSITIVE
+        MIN_POSITIVE_NORMAL
     }
 
     fn max_value() -> Self {
@@ -172,15 +147,15 @@ impl Float for BigFloat {
     }
 
     fn is_finite(self) -> bool {
-        !BigFloat::is_inf(&self)
+        !(BigFloat::is_inf(&self) || BigFloat::is_nan(&self))
     }
 
     fn is_normal(self) -> bool {
-        !self.is_subnormal()
+        !(self.is_subnormal() || self.is_inf() || self.is_nan() || self.is_zero())
     }
 
-    fn classify(self) -> std::num::FpCategory {
-        todo!()
+    fn classify(self) -> FpCategory {
+        BigFloat::classify(&self)
     }
 
     fn floor(self) -> Self {
@@ -192,7 +167,7 @@ impl Float for BigFloat {
     }
 
     fn round(self) -> Self {
-        BigFloat::round(&self, 0, RoundingMode::ToEven)
+        BigFloat::round(&self, 0, RoundingMode::FromZero)
     }
 
     fn trunc(self) -> Self {
@@ -208,17 +183,25 @@ impl Float for BigFloat {
     }
 
     fn signum(self) -> Self {
-        BigFloat::signum(&self)
+        let ret = BigFloat::signum(&self);
+        if ret.is_zero() {
+            ONE
+        } else {
+            ret
+        }
     }
 
+    /// Note: BigFloat NaN has no sign.
     fn is_sign_positive(self) -> bool {
         BigFloat::is_positive(&self)
     }
 
+    /// Note: BigFloat NaN has no sign.
     fn is_sign_negative(self) -> bool {
         BigFloat::is_negative(&self)
     }
 
+    /// This function is provided only for compatibility. It is not faster than separate multiplication and addition.
     fn mul_add(self, a: Self, b: Self) -> Self {
         self * a + b
     }
@@ -227,6 +210,7 @@ impl Float for BigFloat {
         ONE / self
     }
 
+    /// This function is provided only for compatibility. It is not faster than `powf`.
     fn powi(self, n: i32) -> Self {
         let p = BigFloat::from_i32(n);
         BigFloat::pow(&self, &p)
@@ -245,7 +229,7 @@ impl Float for BigFloat {
     }
 
     fn exp2(self) -> Self {
-        todo!()
+        BigFloat::pow(&TWO, &self)
     }
 
     fn ln(self) -> Self {
@@ -253,15 +237,15 @@ impl Float for BigFloat {
     }
 
     fn log(self, base: Self) -> Self {
-        todo!()
+        BigFloat::log(&self, &base)
     }
 
     fn log2(self) -> Self {
-        todo!()
+        BigFloat::log2(&self)
     }
 
     fn log10(self) -> Self {
-        todo!()
+        BigFloat::log10(&self)
     }
 
     fn max(self, other: Self) -> Self {
@@ -273,7 +257,12 @@ impl Float for BigFloat {
     }
 
     fn abs_sub(self, other: Self) -> Self {
-        todo!()
+        let ret = self.sub(&other);
+        if ret.is_negative() {
+            ZERO
+        } else {
+            ret
+        }
     }
 
     fn cbrt(self) -> Self {
@@ -309,19 +298,30 @@ impl Float for BigFloat {
     }
 
     fn atan2(self, other: Self) -> Self {
-        todo!()
+        if self.is_zero() && other.is_zero() {
+            ZERO
+        } else if self.is_positive() || self.is_zero() {
+            BigFloat::atan(&other.div(&self))
+        } else if other.is_positive() || other.is_zero() {
+            BigFloat::atan(&other.div(&self)) + PI
+        } else {
+            BigFloat::atan(&other.div(&self)) - PI
+        }
     }
 
+    /// This function is provided only for compatibility.
     fn sin_cos(self) -> (Self, Self) {
-        todo!()
+        (BigFloat::sin(&self), BigFloat::cos(&self))
     }
 
+    /// This function is provided only for compatibility.
     fn exp_m1(self) -> Self {
-        todo!()
+        self.exp().sub(&ONE)
     }
 
+    /// This function is provided only for compatibility.
     fn ln_1p(self) -> Self {
-        todo!()
+        self.add(&ONE).ln()
     }
 
     fn sinh(self) -> Self {
@@ -348,7 +348,270 @@ impl Float for BigFloat {
         BigFloat::atanh(&self)
     }
 
+    /// This function converts BigFloat to f64 and decomposes it.
     fn integer_decode(self) -> (u64, i16, i8) {
-        todo!()
+
+        let f = self.to_f64();
+
+        let bits: u64 = f.to_bits();
+
+        let sign: i8 = if bits >> 63 == 0 { 1 } else { -1 };
+
+        let mut exponent: i16 = ((bits >> 52) & 0x7ff) as i16;
+
+        let mantissa = if exponent == 0 {
+            (bits & 0xfffffffffffff) << 1
+        } else {
+            (bits & 0xfffffffffffff) | 0x10000000000000
+        };
+
+        exponent -= 1023 + 52;
+
+        (mantissa, exponent, sign)
+    }
+}
+
+impl FloatConst for BigFloat {
+    fn E() -> Self {
+        crate::E
+    } 
+ 
+    fn FRAC_1_PI() -> Self {
+        crate::PI
+    } 
+ 
+    fn FRAC_1_SQRT_2() -> Self {
+        crate::FRAC_1_SQRT_2
+    } 
+ 
+    fn FRAC_2_PI() -> Self {
+        crate::FRAC_2_PI
+    } 
+ 
+    fn FRAC_2_SQRT_PI() -> Self {
+        crate::FRAC_2_SQRT_PI
+    } 
+ 
+    fn FRAC_PI_2() -> Self {
+        crate::HALF_PI
+    } 
+ 
+    fn FRAC_PI_3() -> Self {
+        crate::FRAC_PI_3
+    } 
+ 
+    fn FRAC_PI_4() -> Self {
+        crate::FRAC_PI_4
+    }
+
+    fn FRAC_PI_6() -> Self {
+        crate::FRAC_PI_6
+    } 
+ 
+    fn FRAC_PI_8() -> Self {
+        crate::FRAC_PI_8
+    } 
+ 
+    fn LN_10() -> Self {
+        crate::LN_10
+    } 
+ 
+    fn LN_2() -> Self {
+        crate::LN_2
+    } 
+ 
+    fn LOG10_E() -> Self {
+        crate::LOG10_E
+    }
+
+    fn LOG2_E() -> Self {
+        crate::LOG2_E
+    } 
+ 
+    fn PI() -> Self {
+        crate::PI
+    } 
+ 
+    fn SQRT_2() -> Self {
+        crate::SQRT_2
+    }
+}
+
+impl FromPrimitive for BigFloat {
+    fn from_i64(n: i64) -> Option<Self> {
+        Some(BigFloat::from_i64(n))
+    }
+
+    fn from_u64(n: u64) -> Option<Self> {
+        Some(BigFloat::from_u64(n))
+    }
+
+    fn from_i128(n: i128) -> Option<Self> {
+        Some(BigFloat::from_i128(n))
+    }
+
+    fn from_u128(n: u128) -> Option<Self> {
+        Some(BigFloat::from_u128(n))
+    }
+
+    fn from_f32(n: f32) -> Option<Self> {
+        Some(BigFloat::from_f32(n))
+    }
+
+    fn from_f64(n: f64) -> Option<Self> {
+        Some(BigFloat::from_f64(n))
+    }
+}
+
+impl Inv for BigFloat {
+    type Output = BigFloat;
+
+    fn inv(self) -> Self::Output {
+        ONE.div(&self)
+    }
+}
+
+/// This trait is provided only for compatibility. It does not provide performance benefits.
+impl MulAdd for BigFloat {
+    type Output = BigFloat;
+
+    fn mul_add(self, a: Self, b: Self) -> Self::Output {
+        self.mul(&a).add(&b)
+    }
+}
+
+/// This trait is provided only for compatibility. It does not provide performance benefits.
+impl MulAddAssign for BigFloat {
+    fn mul_add_assign(&mut self, a: Self, b: Self) {
+        *self = self.mul(&a).add(&b)
+    }
+}
+
+impl Pow<BigFloat> for BigFloat {
+    type Output = BigFloat;
+
+    fn pow(self, rhs: BigFloat) -> Self::Output {
+        BigFloat::pow(&self, &rhs)
+    }
+}
+
+impl Signed for BigFloat {
+
+    /// Note: BigFloat NaN has no sign.
+    fn abs(&self) -> Self {
+        BigFloat::abs(self)
+    }
+
+    fn abs_sub(&self, other: &Self) -> Self {
+        let ret = self.sub(other);
+        if ret.is_negative() {
+            ZERO
+        } else {
+            ret
+        }
+    }
+
+    /// Note: BigFloat NaN has no sign.
+    fn signum(&self) -> Self {
+        let ret = BigFloat::signum(self);
+        if ret.is_zero() {
+            ONE
+        } else {
+            ret
+        }
+    }
+
+    fn is_positive(&self) -> bool {
+        self.is_positive() && !self.is_zero()
+    }
+
+    fn is_negative(&self) -> bool {
+        self.is_negative() && !self.is_zero()
+    }
+}
+
+impl Euclid for BigFloat {    
+    fn div_euclid(&self, v: &BigFloat) -> BigFloat {
+        let q = BigFloat::int(&self.div(&v));
+        if BigFloat::rem(self, v).is_negative() {
+            return if v.is_negative() { q.add(&ONE) } else { q.sub(&ONE) };
+        }
+        q
+    }
+
+    fn rem_euclid(&self, v: &BigFloat) -> BigFloat {
+        let r = BigFloat::rem(self, v);
+        if r.is_negative() {
+            v.abs().add(&r)
+        } else {
+            r
+        }
+    }
+}
+
+#[cfg(not(feature="std"))]
+impl FloatCore for BigFloat {
+    fn infinity() -> Self {
+        INF_POS
+    }
+
+    fn neg_infinity() -> Self {
+        INF_NEG
+    }
+
+    fn nan() -> Self {
+        NAN
+    }
+
+    fn neg_zero() -> Self {
+        ZERO
+    }
+
+    fn min_value() -> Self {
+        MIN
+    }
+
+    fn min_positive_value() -> Self {
+        MIN_POSITIVE_NORMAL
+    }
+
+    fn epsilon() -> Self {
+        EPSILON
+    }
+
+    fn max_value() -> Self {
+        MAX
+    }
+
+    fn classify(self) -> FpCategory {
+        BigFloat::classify(&self)
+    }
+
+    fn to_degrees(self) -> Self {
+        self.mul(&RAD_TO_DEG_FACTOR)
+    }
+
+    fn to_radians(self) -> Self {
+        self.div(&RAD_TO_DEG_FACTOR)
+    }
+
+    fn integer_decode(self) -> (u64, i16, i8) {
+        let f = self.to_f64();
+
+        let bits: u64 = f.to_bits();
+
+        let sign: i8 = if bits >> 63 == 0 { 1 } else { -1 };
+
+        let mut exponent: i16 = ((bits >> 52) & 0x7ff) as i16;
+
+        let mantissa = if exponent == 0 {
+            (bits & 0xfffffffffffff) << 1
+        } else {
+            (bits & 0xfffffffffffff) | 0x10000000000000
+        };
+
+        exponent -= 1023 + 52;
+
+        (mantissa, exponent, sign)
     }
 }

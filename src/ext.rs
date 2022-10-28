@@ -4,6 +4,7 @@
 use crate::defs::{BigFloatNum, Error, DECIMAL_SIGN_POS, DECIMAL_PARTS, DECIMAL_SIGN_NEG, DECIMAL_POSITIONS,
     DECIMAL_MAX_EXPONENT, DECIMAL_MIN_EXPONENT, RoundingMode, DECIMAL_BASE_LOG10, DECIMAL_BASE, I64_MAX, I64_MIN, U64_MAX, I128_MIN, I128_MAX, U128_MAX};
 use crate::util::WritableBuf;
+use core::num::FpCategory;
 
 #[cfg(feature="std")]
 use std::fmt::Write;
@@ -29,8 +30,11 @@ pub const MIN: BigFloat = BigFloat {inner: Flavor::Value(crate::defs::MIN)};
 /// Minumum possible exponent.
 pub const MIN_EXP: i8 = DECIMAL_MIN_EXPONENT;
 
-/// Smalles positive number.
+/// The smalles positive number.
 pub const MIN_POSITIVE: BigFloat = BigFloat {inner: Flavor::Value(crate::defs::MIN_POSITIVE)};
+
+/// The smalles positive normal number.
+pub const MIN_POSITIVE_NORMAL: BigFloat = BigFloat {inner: Flavor::Value(crate::defs::MIN_POSITIVE_NORMAL)};
 
 /// Radix of BigFloat
 pub const RADIX: u32 = 10;
@@ -59,12 +63,134 @@ pub const E: BigFloat = BigFloat { inner: Flavor::Value(crate::defs::E) };
 /// PI number.
 pub const PI: BigFloat = BigFloat { inner: Flavor::Value(crate::defs::PI) };
 
-/// PI/2.
+/// PI / 2.
 pub const HALF_PI: BigFloat = BigFloat { inner: Flavor::Value(BigFloatNum {
     m: [2099, 5144, 6397, 1691, 3132, 6192, 4896, 2679, 7963, 1570],
     n: DECIMAL_POSITIONS as i16, 
     sign: DECIMAL_SIGN_POS, 
     e: -(DECIMAL_POSITIONS as i8 - 1),
+})};
+
+/// SQRT(2)
+pub const SQRT_2: BigFloat = BigFloat { inner: Flavor::Value(BigFloatNum {
+    sign: 1,
+    e: -(DECIMAL_POSITIONS as i8) + 1, 
+    n: DECIMAL_POSITIONS as i16, 
+    m: [8570, 9807, 2096, 8724, 168, 488, 3095, 6237, 2135, 1414] 
+})};
+
+/// 1 / PI
+pub const FRAC_1_PI: BigFloat = BigFloat { inner: Flavor::Value(BigFloatNum {
+    sign: 1,
+    e: -(DECIMAL_POSITIONS as i8), 
+    n: DECIMAL_POSITIONS as i16, 
+    m: [689, 8724, 4502, 5267, 7767, 7153, 7906, 6183, 988, 3183]
+})};
+
+/// 1 / SQRT(2)
+pub const FRAC_1_SQRT_2: BigFloat = BigFloat { inner: Flavor::Value(BigFloatNum {
+    sign: 1,
+    e: -(DECIMAL_POSITIONS as i8), 
+    n: DECIMAL_POSITIONS as i16, 
+    m: [2848, 9039, 484, 3621, 844, 2440, 5475, 1186, 678, 7071]
+})};
+
+/// 2 / PI
+pub const FRAC_2_PI: BigFloat = BigFloat { inner: Flavor::Value(BigFloatNum {
+    sign: 1,
+    e: -(DECIMAL_POSITIONS as i8), 
+    n: DECIMAL_POSITIONS as i16, 
+    m: [1378, 7448, 9005, 534, 5535, 4307, 5813, 2367, 1977, 6366]
+})};
+
+/// 2 / SQRT(PI)
+pub const FRAC_2_SQRT_PI: BigFloat = BigFloat { inner: Flavor::Value(BigFloatNum {
+    sign: 1,
+    e: -(DECIMAL_POSITIONS as i8), 
+    n: DECIMAL_POSITIONS as i16, 
+    m: [8440, 2585, 6077, 4515, 8079, 8694, 7562, 3547, 8958, 5641]
+})};
+
+/// PI / 3
+pub const FRAC_PI_3: BigFloat = BigFloat { inner: Flavor::Value(BigFloatNum {
+    sign: 1,
+    e: -(DECIMAL_POSITIONS as i8) + 1, 
+    n: DECIMAL_POSITIONS as i16, 
+    m: [8066, 6762, 931, 4461, 5421, 7461, 6597, 5119, 1975, 1047]
+})};
+
+/// PI / 4
+pub const FRAC_PI_4: BigFloat = BigFloat { inner: Flavor::Value(BigFloatNum {
+    sign: 1,
+    e: -(DECIMAL_POSITIONS as i8), 
+    n: DECIMAL_POSITIONS as i16, 
+    m: [493, 5721, 1987, 8458, 5660, 961, 4483, 3397, 9816, 7853]
+})};
+
+/// PI / 6
+pub const FRAC_PI_6: BigFloat = BigFloat { inner: Flavor::Value(BigFloatNum {
+    sign: 1,
+    e: -(DECIMAL_POSITIONS as i8), 
+    n: DECIMAL_POSITIONS as i16, 
+    m: [329, 3814, 4658, 2305, 7107, 7307, 2988, 5598, 9877, 5235]
+})};
+
+/// PI / 8
+pub const FRAC_PI_8: BigFloat = BigFloat { inner: Flavor::Value(BigFloatNum {
+    sign: 1,
+    e: -(DECIMAL_POSITIONS as i8), 
+    n: DECIMAL_POSITIONS as i16, 
+    m: [5246, 7860, 993, 4229, 7830, 5480, 7241, 1698, 9908, 3926]
+})};
+
+/// ln(10)
+pub const LN_10: BigFloat = BigFloat { inner: Flavor::Value(BigFloatNum {
+    sign: 1,
+    e: -(DECIMAL_POSITIONS as i8) + 1, 
+    n: DECIMAL_POSITIONS as i16, 
+    m: [7601, 6420, 6843, 1454, 1799, 6840, 4045, 9299, 5850, 2302]
+})};
+
+/// ln(2)
+pub const LN_2: BigFloat = BigFloat { inner: Flavor::Value(BigFloatNum {
+    sign: 1,
+    e: -(DECIMAL_POSITIONS as i8), 
+    n: DECIMAL_POSITIONS as i16, 
+    m: [755, 6568, 5817, 1214, 7232, 941, 9453, 559, 4718, 6931]
+})};
+
+/// log10(E)
+pub const LOG10_E: BigFloat = BigFloat { inner: Flavor::Value(BigFloatNum {
+    sign: -1,
+    e: -(DECIMAL_POSITIONS as i8), 
+    n: DECIMAL_POSITIONS as i16, 
+    m: [318, 6507, 4129, 4666, 288, 8946, 8323, 1216, 6189, 2386]
+})};
+
+/// log2(E)
+pub const LOG2_E: BigFloat = BigFloat { inner: Flavor::Value(BigFloatNum {
+    sign: -1,
+    e: -(DECIMAL_POSITIONS as i8), 
+    n: DECIMAL_POSITIONS as i16, 
+    m: [6474, 6789, 169, 9107, 4620, 3637, 1469, 1612, 1764, 7928]
+})};
+
+/// The difference between 1 and the smallest floating point number greater than 1.
+pub const EPSILON: BigFloat = BigFloat { inner: Flavor::Value(BigFloatNum {
+    sign: 1,
+    e: 0,
+    n: 1,
+    m: [1, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+})};
+
+/// 180 / PI
+#[cfg(not(feature="std"))]
+#[cfg(feature="num-traits")]
+pub const RAD_TO_DEG_FACTOR: BigFloat = BigFloat { inner: Flavor::Value(BigFloatNum {
+    sign: 1,
+    e: -(DECIMAL_POSITIONS as i8) + 2,
+    n: DECIMAL_POSITIONS as i16,
+    m: [3240, 1703, 4105, 5481, 7981, 876, 8232, 5130, 5779, 5729]
 })};
 
 /// Number representation.
@@ -942,6 +1068,27 @@ impl BigFloat {
 
         Ok(BigFloat::from_raw_parts(mantissa, DECIMAL_POSITIONS as i16, sign, exp))
     }
+
+    pub fn classify(&self) -> FpCategory {
+        match self.inner {
+            Flavor::Value(v) => {
+                if v.is_subnormal() {
+                    FpCategory::Subnormal
+                } else if v.is_zero() {
+                    FpCategory::Zero
+                } else {
+                    FpCategory::Normal
+                }
+            },
+            Flavor::Inf(_) => FpCategory::Infinite,
+            Flavor::NaN => FpCategory::Nan,
+        }
+    }
+
+    /// Returns the remainder of division of `self` by `d1`.
+    pub fn rem(&self, d1: &Self) -> Self {
+        self.sub(&(self.div(&d1)).int().mul(&d1))
+    }
 }
 
 
@@ -1008,34 +1155,60 @@ impl BigFloat {
 }
 
 /// Standard library features
-#[cfg(feature = "std")]
-pub mod std_ops {
+pub mod ops {
 
     use crate::ONE;
     use crate::ZERO;
     use crate::NAN;
     use crate::BigFloat;
 
-    use std::iter::Product;
-    use std::iter::Sum;
-    use std::ops::Add;
-    use std::ops::AddAssign;
-    use std::ops::Div;
-    use std::ops::DivAssign;
-    use std::ops::Mul;
-    use std::ops::MulAssign;
-    use std::ops::Neg;
-    use std::ops::Sub;
-    use std::ops::SubAssign;
-    use std::cmp::PartialEq;
-    use std::cmp::Eq;
-    use std::cmp::PartialOrd;
-    use std::cmp::Ordering;
-    use std::fmt::Display;
-    use std::fmt::Formatter;
-    use std::str::FromStr;
-    use std::ops::Rem;
-    
+    #[cfg(feature = "std")]
+    use std::{
+        iter::Product,
+        iter::Sum,
+        ops::Add,
+        ops::AddAssign,
+        ops::Div,
+        ops::DivAssign,
+        ops::Mul,
+        ops::MulAssign,
+        ops::Neg,
+        ops::Sub,
+        ops::SubAssign,
+        cmp::PartialEq,
+        cmp::Eq,
+        cmp::PartialOrd,
+        cmp::Ordering,
+        fmt::Display,
+        fmt::Formatter,
+        str::FromStr,
+        ops::Rem
+    };
+
+
+    #[cfg(not(feature = "std"))]
+    use core::{
+        iter::Product,
+        iter::Sum,
+        ops::Add,
+        ops::AddAssign,
+        ops::Div,
+        ops::DivAssign,
+        ops::Mul,
+        ops::MulAssign,
+        ops::Neg,
+        ops::Sub,
+        ops::SubAssign,
+        cmp::PartialEq,
+        cmp::Eq,
+        cmp::PartialOrd,
+        cmp::Ordering,
+        fmt::Display,
+        fmt::Formatter,
+        str::FromStr,
+        ops::Rem
+    };
+
     //
     // ops traits
     //
@@ -1069,7 +1242,7 @@ pub mod std_ops {
     impl Rem for BigFloat {
         type Output = Self;
         fn rem(self, rhs: Self) -> Self::Output {
-            self - (self / rhs).int() * rhs
+            BigFloat::rem(&self, &rhs)
         }
     }
     
@@ -1209,7 +1382,14 @@ pub mod std_ops {
     }
 
     impl Display for BigFloat {
+
+        #[cfg(feature="std")]
         fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
+            self.write_str(f)
+        }
+
+        #[cfg(not(feature="std"))]
+        fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), core::fmt::Error> {
             self.write_str(f)
         }
     }
@@ -1319,6 +1499,22 @@ macro_rules! impl_int_conv {
                 BigFloat::$from_u(i)
             }
         }
+
+
+
+        #[cfg(not(feature = "std"))]
+        impl core::convert::From<$s> for BigFloat {
+            fn from(i: $s) -> Self {
+                BigFloat::$from_s(i)
+            }
+        }
+
+        #[cfg(not(feature = "std"))]
+        impl core::convert::From<$u> for BigFloat {
+            fn from(i: $u) -> Self {
+                BigFloat::$from_u(i)
+            }
+        }
     };
 }
 
@@ -1338,6 +1534,9 @@ mod tests {
 
     #[cfg(feature = "std")]
     use std::str::FromStr;
+
+    #[cfg(not(feature = "std"))]
+    use core::str::FromStr;
 
     #[test]
     fn test_ext() {
@@ -1729,10 +1928,8 @@ mod tests {
         assert!(NAN.atanh().is_nan());
     }
 
-
-    #[cfg(feature = "std")]
     #[test]
-    pub fn test_std() {
+    pub fn test_ops() {
 
         let d1 = ONE;
         let d2 = BigFloat::new();
@@ -1775,14 +1972,30 @@ mod tests {
         assert!(d1.is_negative());
 
         let d1 = BigFloat::from_f64(0.0123456789);
-        assert!(format!("{}", d1) == "1.234567890000000000000000000000000000000e-2");
-        assert!(BigFloat::from_str(&format!("{}", d1)).unwrap() == d1);
+
+        let mut buf = [0u8; 256];
+        let wblen = fmt_to_str(&d1, &mut buf).len();
+        let d1str = core::str::from_utf8(&buf[..wblen]).unwrap();
+        assert_eq!(d1str, "1.234567890000000000000000000000000000000e-2");
+        assert!(BigFloat::from_str(d1str).unwrap() == d1);
+
         let d1 = BigFloat::from_f64(-123.456789);
-        assert!(format!("{}", d1) == "-1.234567890000000000000000000000000000000e+2");
-        assert!(BigFloat::from_str(&format!("{}", d1)).unwrap() == d1);
-        assert!(format!("{}", INF_POS) == "Inf");
-        assert!(format!("{}", INF_NEG) == "-Inf");
-        assert!(format!("{}", NAN) == "NaN");
+        let wblen = fmt_to_str(&d1, &mut buf).len();
+        let d1str = core::str::from_utf8(&buf[..wblen]).unwrap();
+        assert!(d1str == "-1.234567890000000000000000000000000000000e+2");
+        assert!(BigFloat::from_str(d1str).unwrap() == d1);
+
+        let wblen = fmt_to_str(&INF_POS, &mut buf).len();
+        let d1str = core::str::from_utf8(&buf[..wblen]).unwrap();
+        assert!(d1str == "Inf");
+
+        let wblen = fmt_to_str(&INF_NEG, &mut buf).len();
+        let d1str = core::str::from_utf8(&buf[..wblen]).unwrap();
+        assert!(d1str == "-Inf");
+
+        let wblen = fmt_to_str(&NAN, &mut buf).len();
+        let d1str = core::str::from_utf8(&buf[..wblen]).unwrap();
+        assert!(d1str == "NaN");
 
         assert!(BigFloat::from_str("abc").unwrap_err().is_nan());
 
@@ -1800,6 +2013,13 @@ mod tests {
         assert!(BigFloat::from_u64(1234567890123456789) == BigFloat::parse("1.234567890123456789e+18").unwrap());
         assert!(BigFloat::from_i128(-123456789012345678901234567890123456789) == BigFloat::parse("-1.23456789012345678901234567890123456789e+38").unwrap());
         assert!(BigFloat::from_u128(123456789012345678901234567890123456789) == BigFloat::parse("1.23456789012345678901234567890123456789e+38").unwrap());
+    }
+
+    fn fmt_to_str<'a>(f: &BigFloat, buf: &'a mut [u8]) -> WritableBuf<'a> {
+        buf.fill(0);
+        let mut strepr = WritableBuf::new(buf);
+        write!(strepr, "{}", f).unwrap();
+        strepr
     }
 }
 

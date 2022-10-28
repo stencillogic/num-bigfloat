@@ -83,6 +83,7 @@ pub use crate::ext::MAX_EXP;
 pub use crate::ext::MIN;
 pub use crate::ext::MIN_EXP;
 pub use crate::ext::MIN_POSITIVE;
+pub use crate::ext::MIN_POSITIVE_NORMAL;
 pub use crate::ext::RADIX;
 pub use crate::ext::NAN;
 pub use crate::ext::INF_POS;
@@ -93,6 +94,21 @@ pub use crate::ext::TWO;
 pub use crate::ext::E;
 pub use crate::ext::PI;
 pub use crate::ext::HALF_PI;
+pub use crate::ext::SQRT_2;
+pub use crate::ext::FRAC_1_PI;
+pub use crate::ext::FRAC_1_SQRT_2;
+pub use crate::ext::FRAC_2_PI;
+pub use crate::ext::FRAC_2_SQRT_PI;
+pub use crate::ext::FRAC_PI_3;
+pub use crate::ext::FRAC_PI_4;
+pub use crate::ext::FRAC_PI_6;
+pub use crate::ext::FRAC_PI_8;
+pub use crate::ext::LN_10;
+pub use crate::ext::LN_2;
+pub use crate::ext::LOG10_E;
+pub use crate::ext::LOG2_E;
+pub use crate::ext::EPSILON;
+
 
 #[cfg(test)]
 mod tests {

@@ -22,3 +22,5 @@ jobs:
       run: cargo test --release --verbose
     - name: Run tests with no features and with no_std
       run: cargo test --release --verbose --no-default-features
+    - name: Run tests with features serde,num-traits and with no_std
+      run: cargo test --release --no-default-features --features num-traits,serde

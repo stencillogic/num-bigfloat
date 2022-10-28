@@ -180,6 +180,14 @@ pub const MIN_POSITIVE: BigFloatNum = BigFloatNum {
     e: DECIMAL_MIN_EXPONENT,
 };
 
+/// Smalles positive normal number.
+pub const MIN_POSITIVE_NORMAL: BigFloatNum = BigFloatNum {
+    m: [0, 0, 0, 0, 0, 0, 0, 0, 0, 1000,],
+    n: 1, 
+    sign: DECIMAL_SIGN_POS, 
+    e: DECIMAL_MIN_EXPONENT,
+};
+
 
 /// Creation and number manipulation functions.
 impl BigFloatNum {
