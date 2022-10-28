@@ -42,6 +42,8 @@ Benchmark for `num-bigfloat`, `rug`(`MPFR`), and `astro-float` can be found here
 
 ## Other features
 
-The library depends on [rand](https://crates.io/crates/rand) which is used by `BigFloat::random_normal`. This dependecy can be excluded by turning off the `rand` feature.
+The library depends on [rand](https://crates.io/crates/rand) which is used by `BigFloat::random_normal`. This dependecy can be excluded by turning off the `rand` feature. `rand` feature requires `std` feature.
 
-In addition, the library depends on [serde](https://crates.io/crates/serde) which is also optional and can be eliminated by turning off the `serde` feature.
+The library depends on [serde](https://crates.io/crates/serde) which is also optional and can be eliminated by turning off the `serde` feature.
+
+In addition, the library implements [num-traits](https://crates.io/crates/num_traits). Dependency on `num-traits` can be excluded by turning off `num-traits` feature.
