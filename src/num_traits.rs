@@ -300,12 +300,14 @@ impl Float for BigFloat {
     fn atan2(self, other: Self) -> Self {
         if self.is_zero() && other.is_zero() {
             ZERO
-        } else if self.is_positive() || self.is_zero() {
-            BigFloat::atan(&other.div(&self))
-        } else if other.is_positive() || other.is_zero() {
-            BigFloat::atan(&other.div(&self)) + PI
+        } else if other.is_negative() {
+            if self.is_negative() {
+                BigFloat::atan(&self.div(&other)) - PI
+            } else {
+                BigFloat::atan(&self.div(&other)) + PI
+            }
         } else {
-            BigFloat::atan(&other.div(&self)) - PI
+            BigFloat::atan(&self.div(&other))
         }
     }
 
@@ -374,10 +376,10 @@ impl Float for BigFloat {
 impl FloatConst for BigFloat {
     fn E() -> Self {
         crate::E
-    } 
+    }
  
     fn FRAC_1_PI() -> Self {
-        crate::PI
+        crate::FRAC_1_PI
     } 
  
     fn FRAC_1_SQRT_2() -> Self {
@@ -614,4 +616,377 @@ impl FloatCore for BigFloat {
 
         (mantissa, exponent, sign)
     }
+}
+
+#[cfg(test)]
+mod tests {
+
+    use core::num::FpCategory;
+    use num_traits::{Num, Bounded, Zero, FloatConst, Euclid};
+    use crate::{BigFloat, MIN_POSITIVE_NORMAL, MIN_POSITIVE, ONE, E, EPSILON, PI, HALF_PI, TWO};
+
+    #[cfg(feature = "std")]
+    use num_traits::Float;
+
+    #[cfg(not(feature = "std"))]
+    use num_traits::float::FloatCore;
+    
+
+    #[test]
+    fn test_num_traits() {
+
+        // Num
+        let s1 = "1.234";
+        let d1 = BigFloat::from_str_radix(s1, 10).unwrap();
+        let d2 = BigFloat::parse(s1).unwrap();
+        assert!(d1.cmp(&d2) == Some(0));
+        assert!(BigFloat::from_str_radix(s1, 123).is_err());
+
+        // Float
+        #[cfg(feature = "std")] {
+            let nan = <BigFloat as Float>::nan();
+            assert!(Float::is_nan(nan));
+            assert!(!Float::is_nan(d1));
+    
+            let infinity = <BigFloat as Float>::infinity();
+            assert!(Float::is_infinite(infinity));
+            assert!(!Float::is_finite(infinity));
+            assert!(infinity > <BigFloat as Bounded>::max_value());
+    
+            let neg_infinity = <BigFloat as Float>::neg_infinity();
+            assert!(neg_infinity.is_infinite());
+            assert!(!neg_infinity.is_finite());
+            assert!(neg_infinity < <BigFloat as Bounded>::min_value());
+    
+            let zero = <BigFloat as Zero>::zero();
+            let neg_zero = <BigFloat as Float>::neg_zero();
+    
+            assert_eq!(zero, neg_zero);
+            assert_eq!(BigFloat::from_f32(7.0)/infinity, zero);
+            assert_eq!(zero * BigFloat::from_f32(10.0), zero);
+    
+            assert_eq!(<BigFloat as Float>::min_value(), <BigFloat as Bounded>::min_value());
+            assert_eq!(<BigFloat as Float>::min_positive_value(), MIN_POSITIVE_NORMAL);
+            assert_eq!(<BigFloat as Float>::max_value(), <BigFloat as Bounded>::max_value());
+    
+            assert!(<BigFloat as Float>::min_value().is_normal());
+            assert!(<BigFloat as Float>::max_value().is_normal());
+    
+            let subnormal = MIN_POSITIVE;
+            assert!(!Float::is_normal(zero));
+            assert!(!Float::is_normal(nan));
+            assert!(!Float::is_normal(infinity));
+            assert!(!Float::is_normal(subnormal));
+    
+            assert_eq!(Float::classify(d1), FpCategory::Normal);
+            assert_eq!(Float::classify(infinity), FpCategory::Infinite);
+            assert_eq!(Float::classify(nan), FpCategory::Nan);
+            assert_eq!(Float::classify(zero), FpCategory::Zero);
+            assert_eq!(Float::classify(subnormal), FpCategory::Subnormal);
+    
+            let d1 = BigFloat::parse("3.3").unwrap();
+            let d2 = BigFloat::parse("3.0").unwrap();
+            assert_eq!(Float::floor(d1), d2);
+            assert_eq!(Float::floor(d2), d2);
+    
+            let d1 = BigFloat::parse("3.3").unwrap();
+            let d2 = BigFloat::parse("4.0").unwrap();
+            assert_eq!(Float::ceil(d1), d2);
+            assert_eq!(Float::ceil(d2), d2);
+    
+            let d1 = BigFloat::parse("3.3").unwrap();
+            let d2 = BigFloat::parse("3.0").unwrap();
+            assert_eq!(Float::round(d1), d2);
+    
+            let d1 = BigFloat::parse("3.5").unwrap();
+            let d2 = BigFloat::parse("4.0").unwrap();
+            assert_eq!(Float::round(d1), d2);
+    
+            let d1 = BigFloat::parse("-3.3").unwrap();
+            let d2 = BigFloat::parse("-3.0").unwrap();
+            assert_eq!(Float::round(d1), d2);
+    
+            let d1 = BigFloat::parse("-3.5").unwrap();
+            let d2 = BigFloat::parse("-4.0").unwrap();
+            assert_eq!(Float::round(d1), d2);
+    
+            let d1 = BigFloat::parse("3.7").unwrap();
+            let d2 = BigFloat::parse("3.0").unwrap();
+            assert_eq!(Float::trunc(d1), d2);
+    
+            let d1 = BigFloat::parse("-3.7").unwrap();
+            let d2 = BigFloat::parse("-3.0").unwrap();
+            assert_eq!(Float::trunc(d1), d2);
+    
+            let d1 = BigFloat::parse("-11.234").unwrap();
+            let d2 = BigFloat::parse("-0.234").unwrap();
+            assert_eq!(Float::fract(d1), d2);
+    
+            let d1 = BigFloat::parse("-0.234").unwrap();
+            let d2 = BigFloat::parse("0.234").unwrap();
+            assert_eq!(Float::abs(d1), d2);
+            assert_eq!(Float::abs(d2), d2);
+    
+            assert_eq!(Float::signum(d2), ONE);
+            assert_eq!(Float::signum(d1), -ONE);
+            assert_eq!(Float::signum(infinity), ONE);
+            assert_eq!(Float::signum(neg_infinity), -ONE);
+            assert!(Float::signum(nan).is_nan());
+    
+            assert!(Float::is_sign_positive(d2));
+            assert!(Float::is_sign_positive(infinity));
+            assert!(!Float::is_sign_positive(d1));
+            assert!(!Float::is_sign_positive(neg_infinity));
+            assert!(!Float::is_sign_positive(nan));
+            assert!(Float::is_sign_negative(d1));
+            assert!(Float::is_sign_negative(neg_infinity));
+            assert!(!Float::is_sign_negative(d2));
+            assert!(!Float::is_sign_negative(infinity));
+            assert!(!Float::is_sign_negative(nan));
+    
+            let d1 = BigFloat::parse("-2.1").unwrap();
+            let d2 = BigFloat::parse("3.34").unwrap();
+            let d3 = BigFloat::parse("43.657").unwrap();
+            assert_eq!(Float::mul_add(d1, d2, d3), d1 * d2 + d3);
+    
+            assert_eq!(Float::recip(d1), ONE / d1);
+    
+            let d1 = BigFloat::parse("3.0").unwrap();
+            let d2 = BigFloat::parse("81.0").unwrap();
+            let d3 = BigFloat::parse("4.0").unwrap();
+            assert_eq!(Float::powi(d1, 4), d2);
+            assert_eq!(Float::powf(d1, d3), d2);
+    
+            let d1 = BigFloat::parse("9.0").unwrap();
+            let d2 = BigFloat::parse("3.0").unwrap();
+            assert_eq!(Float::sqrt(d1), d2);
+    
+            let d1 = BigFloat::parse("3.0").unwrap();
+            assert!(Float::exp(d1).sub(&E.powf(d1)).abs() <= EPSILON);
+    
+            let d1 = BigFloat::parse("3.0").unwrap();
+            let d2 = BigFloat::parse("2.0").unwrap();
+            assert!(Float::exp2(d1).sub(&d2.powf(d1)).abs() <= EPSILON);
+    
+            let d2 = BigFloat::parse("4.0").unwrap();
+            assert_eq!(Float::ln(d1), BigFloat::ln(&d1));
+            assert_eq!(Float::log10(d1), BigFloat::log10(&d1));
+            assert_eq!(Float::log2(d1), BigFloat::log2(&d1));
+            assert_eq!(Float::log(d1, d2), BigFloat::log(&d1, &d2));
+    
+            assert_eq!(Float::max(d1, d2), d2);
+            assert_eq!(Float::min(d1, d2), d1);
+    
+            let d1 = -d1;
+            let d2 = -d2;
+            assert_eq!(Float::max(d1, d2), d1);
+            assert_eq!(Float::min(d1, d2), d2);
+    
+            let d1 = BigFloat::parse("3.0").unwrap();
+            let d2 = BigFloat::parse("4.0").unwrap();
+            assert!(Float::abs_sub(d1, d2).is_zero());
+            assert_eq!(Float::abs_sub(d2, d1), ONE);
+    
+            let d2 = BigFloat::parse("27.0").unwrap();
+            assert!(Float::cbrt(d2).sub(&d1).abs() <= EPSILON);
+    
+            let d1 = BigFloat::parse("3.0").unwrap();
+            let d2 = BigFloat::parse("4.0").unwrap();
+            let d3 = BigFloat::parse("5.0").unwrap();
+            assert!(Float::hypot(d2, d1).sub(&d3).abs() <= EPSILON);
+    
+    
+            let d1 = BigFloat::parse("0.5").unwrap();
+            assert_eq!(Float::sin(d1), BigFloat::sin(&d1));
+            assert_eq!(Float::cos(d1), BigFloat::cos(&d1));
+            assert_eq!(Float::sin_cos(d1), (BigFloat::sin(&d1), BigFloat::cos(&d1)));
+            assert_eq!(Float::tan(d1), BigFloat::tan(&d1));
+            assert_eq!(Float::asin(d1), BigFloat::asin(&d1));
+            assert_eq!(Float::acos(d1), BigFloat::acos(&d1));
+            assert_eq!(Float::atan(d1), BigFloat::atan(&d1));
+    
+            let d1 = BigFloat::parse("1.5").unwrap();
+            assert_eq!(Float::sinh(d1), BigFloat::sinh(&d1));
+            assert_eq!(Float::cosh(d1), BigFloat::cosh(&d1));
+            assert_eq!(Float::tanh(d1), BigFloat::tanh(&d1));
+            assert_eq!(Float::asinh(d1), BigFloat::asinh(&d1));
+            assert_eq!(Float::acosh(d1), BigFloat::acosh(&d1));
+            let d1 = BigFloat::parse("0.5").unwrap();
+            assert_eq!(Float::atanh(d1), BigFloat::atanh(&d1));
+    
+            let d1 = BigFloat::parse("0.0").unwrap();
+            let d2 = BigFloat::parse("0.0").unwrap();
+            assert!(Float::atan2(d1, d2).is_zero());
+    
+            let d1 = BigFloat::parse("2.0").unwrap();
+            let d2 = BigFloat::parse("3.0").unwrap();
+            assert_eq!(Float::atan2(d1, d2), d1.div(&d2).atan());
+    
+            let d1 = BigFloat::parse("2.0").unwrap();
+            let d2 = BigFloat::parse("-3.0").unwrap();
+            assert_eq!(Float::atan2(d1, d2), d1.div(&d2).atan().add(&PI));
+    
+            let d1 = BigFloat::parse("-2.0").unwrap();
+            let d2 = BigFloat::parse("-3.0").unwrap();
+            assert_eq!(Float::atan2(d1, d2), d1.div(&d2).atan().sub(&PI));
+    
+            let d1 = BigFloat::parse("2.0").unwrap();
+            let d2 = BigFloat::parse("0.0").unwrap();
+            assert_eq!(Float::atan2(d1, d2), HALF_PI);
+    
+            let d1 = BigFloat::parse("-2.0").unwrap();
+            let d2 = BigFloat::parse("0.0").unwrap();
+            assert_eq!(Float::atan2(d1, d2), -HALF_PI);
+    
+            assert_eq!(Float::exp_m1(d1), BigFloat::exp(&d1).sub(&ONE));
+            assert_eq!(Float::ln_1p(E), BigFloat::ln(&E.add(&ONE)));
+    
+            assert_eq!(Float::integer_decode(d1), Float::integer_decode(-2.0f64));
+        }
+
+        // FloatCore
+        #[cfg(not(feature="std"))] {
+            let nan = <BigFloat as FloatCore>::nan();
+            assert!(FloatCore::is_nan(nan));
+            assert!(!FloatCore::is_nan(d1));
+    
+            let infinity = <BigFloat as FloatCore>::infinity();
+            assert!(FloatCore::is_infinite(infinity));
+            assert!(!FloatCore::is_finite(infinity));
+            assert!(infinity > <BigFloat as Bounded>::max_value());
+    
+            let neg_infinity = <BigFloat as FloatCore>::neg_infinity();
+            assert!(neg_infinity.is_infinite());
+            assert!(!neg_infinity.is_finite());
+            assert!(neg_infinity < <BigFloat as Bounded>::min_value());
+    
+            let zero = <BigFloat as Zero>::zero();
+            let neg_zero = <BigFloat as FloatCore>::neg_zero();
+    
+            assert_eq!(zero, neg_zero);
+            assert_eq!(BigFloat::from_f32(7.0)/infinity, zero);
+            assert_eq!(zero * BigFloat::from_f32(10.0), zero);
+    
+            assert_eq!(<BigFloat as FloatCore>::min_value(), <BigFloat as Bounded>::min_value());
+            assert_eq!(<BigFloat as FloatCore>::min_positive_value(), MIN_POSITIVE_NORMAL);
+            assert_eq!(<BigFloat as FloatCore>::max_value(), <BigFloat as Bounded>::max_value());
+    
+            assert!(<BigFloat as FloatCore>::min_value().is_normal());
+            assert!(<BigFloat as FloatCore>::max_value().is_normal());
+    
+            let subnormal = MIN_POSITIVE;
+            assert!(!FloatCore::is_normal(zero));
+            assert!(!FloatCore::is_normal(nan));
+            assert!(!FloatCore::is_normal(infinity));
+            assert!(!FloatCore::is_normal(subnormal));
+    
+            assert_eq!(FloatCore::classify(d1), FpCategory::Normal);
+            assert_eq!(FloatCore::classify(infinity), FpCategory::Infinite);
+            assert_eq!(FloatCore::classify(nan), FpCategory::Nan);
+            assert_eq!(FloatCore::classify(zero), FpCategory::Zero);
+            assert_eq!(FloatCore::classify(subnormal), FpCategory::Subnormal);
+    
+            let d1 = BigFloat::parse("3.3").unwrap();
+            let d2 = BigFloat::parse("3.0").unwrap();
+            assert_eq!(FloatCore::floor(d1), d2);
+            assert_eq!(FloatCore::floor(d2), d2);
+    
+            let d1 = BigFloat::parse("3.3").unwrap();
+            let d2 = BigFloat::parse("4.0").unwrap();
+            assert_eq!(FloatCore::ceil(d1), d2);
+            assert_eq!(FloatCore::ceil(d2), d2);
+    
+            let d1 = BigFloat::parse("3.3").unwrap();
+            let d2 = BigFloat::parse("3.0").unwrap();
+            assert_eq!(FloatCore::round(d1), d2);
+    
+            let d1 = BigFloat::parse("3.5").unwrap();
+            let d2 = BigFloat::parse("4.0").unwrap();
+            assert_eq!(FloatCore::round(d1), d2);
+    
+            let d1 = BigFloat::parse("-3.3").unwrap();
+            let d2 = BigFloat::parse("-3.0").unwrap();
+            assert_eq!(FloatCore::round(d1), d2);
+    
+            let d1 = BigFloat::parse("-3.5").unwrap();
+            let d2 = BigFloat::parse("-4.0").unwrap();
+            assert_eq!(FloatCore::round(d1), d2);
+    
+            let d1 = BigFloat::parse("3.7").unwrap();
+            let d2 = BigFloat::parse("3.0").unwrap();
+            assert_eq!(FloatCore::trunc(d1), d2);
+    
+            let d1 = BigFloat::parse("-3.7").unwrap();
+            let d2 = BigFloat::parse("-3.0").unwrap();
+            assert_eq!(FloatCore::trunc(d1), d2);
+    
+            let d1 = BigFloat::parse("-11.234").unwrap();
+            let d2 = BigFloat::parse("-0.234").unwrap();
+            assert_eq!(FloatCore::fract(d1), d2);
+    
+            let d1 = BigFloat::parse("-0.234").unwrap();
+            let d2 = BigFloat::parse("0.234").unwrap();
+            assert_eq!(FloatCore::abs(d1), d2);
+            assert_eq!(FloatCore::abs(d2), d2);
+    
+            assert_eq!(FloatCore::signum(d2), ONE);
+            assert_eq!(FloatCore::signum(d1), -ONE);
+            assert_eq!(FloatCore::signum(infinity), ONE);
+            assert_eq!(FloatCore::signum(neg_infinity), -ONE);
+            assert!(FloatCore::signum(nan).is_nan());
+    
+            assert!(FloatCore::is_sign_positive(d2));
+            assert!(FloatCore::is_sign_positive(infinity));
+            assert!(!FloatCore::is_sign_positive(d1));
+            assert!(!FloatCore::is_sign_positive(neg_infinity));
+            assert!(FloatCore::is_sign_positive(nan));
+            assert!(FloatCore::is_sign_negative(d1));
+            assert!(FloatCore::is_sign_negative(neg_infinity));
+            assert!(!FloatCore::is_sign_negative(d2));
+            assert!(!FloatCore::is_sign_negative(infinity));
+            assert!(!FloatCore::is_sign_negative(nan));
+
+            let d1 = BigFloat::parse("90.0").unwrap();
+            assert!(FloatCore::to_radians(d1).sub(&HALF_PI).abs() <= EPSILON);
+            assert!(FloatCore::to_degrees(HALF_PI).sub(&d1).abs() <= EPSILON);
+
+            let d1 = BigFloat::parse("-123.123").unwrap();
+            assert_eq!(FloatCore::to_radians(d1).to_degrees(), d1);
+
+            let d1 = BigFloat::parse("-2.0").unwrap();
+            assert_eq!(FloatCore::integer_decode(d1), FloatCore::integer_decode(-2.0f64));
+        }
+
+        // FloatConst
+        assert!(<BigFloat as FloatConst>::SQRT_2().mul(&FloatConst::SQRT_2()).sub(&TWO) <= EPSILON);
+        assert!(<BigFloat as FloatConst>::FRAC_1_PI().mul(&PI).sub(&ONE) <= EPSILON);
+        assert!(<BigFloat as FloatConst>::FRAC_1_SQRT_2().mul(&<BigFloat as FloatConst>::SQRT_2()).sub(&ONE) <= EPSILON);
+        assert!(<BigFloat as FloatConst>::FRAC_2_PI().mul(&PI).sub(&TWO) <= EPSILON);
+        assert!(<BigFloat as FloatConst>::FRAC_2_SQRT_PI().mul(&PI.sqrt()).sub(&TWO) <= EPSILON);
+        assert!(<BigFloat as FloatConst>::FRAC_PI_2().mul(&TWO).sub(&PI) <= EPSILON);
+        assert!(<BigFloat as FloatConst>::FRAC_PI_3().mul(&BigFloat::from_i8(3)).sub(&PI) <= EPSILON);
+        assert!(<BigFloat as FloatConst>::FRAC_PI_4().mul(&BigFloat::from_i8(4)).sub(&PI) <= EPSILON);
+        assert!(<BigFloat as FloatConst>::FRAC_PI_6().mul(&BigFloat::from_i8(6)).sub(&PI) <= EPSILON);
+        assert!(<BigFloat as FloatConst>::FRAC_PI_8().mul(&BigFloat::from_i8(8)).sub(&PI) <= EPSILON);
+        assert!(<BigFloat as FloatConst>::LN_10().sub(&BigFloat::from_i8(10).ln()) <= EPSILON);
+        assert!(<BigFloat as FloatConst>::LN_2().sub(&TWO.ln()) <= EPSILON);
+        assert!(<BigFloat as FloatConst>::LOG10_E().sub(&E.log10()) <= EPSILON);
+        assert!(<BigFloat as FloatConst>::LOG2_E().sub(&E.log2()) <= EPSILON);
+
+        // Euclid
+        let a = BigFloat::from_i8(7);
+        let b = BigFloat::from_i8(4);
+        assert_eq!(Euclid::div_euclid(&a, &b), ONE); // 7 > 4 * 1
+        assert_eq!(Euclid::div_euclid(&-a, &b), -TWO); // -7 >= 4 * -2
+        assert_eq!(Euclid::div_euclid(&a, &-b), -ONE); // 7 >= -4 * -1
+        assert_eq!(Euclid::div_euclid(&-a, &-b), TWO); // -7 >= -4 * 2
+
+        let c = BigFloat::from_i8(3);
+        assert_eq!(Euclid::rem_euclid(&a, &b), c);
+        assert_eq!(Euclid::rem_euclid(&-a, &b), ONE);
+        assert_eq!(Euclid::rem_euclid(&a, &-b), c);
+        assert_eq!(Euclid::rem_euclid(&-a, &-b), ONE);
+    }
+
+    
 }
