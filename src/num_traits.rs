@@ -101,7 +101,7 @@ impl ToPrimitive for BigFloat {
 
 impl NumCast for BigFloat {
 
-    fn from<T: ToPrimitive>(n: T) -> Option<Self> {
+    fn from<T: ToPrimitive>(n: T) -> Option<BigFloat> {
         n.to_f64().map(BigFloat::from_f64)
     }
 }
@@ -622,8 +622,8 @@ impl FloatCore for BigFloat {
 mod tests {
 
     use core::num::FpCategory;
-    use num_traits::{Num, Bounded, Zero, FloatConst, Euclid};
-    use crate::{BigFloat, MIN_POSITIVE_NORMAL, MIN_POSITIVE, ONE, E, EPSILON, PI, HALF_PI, TWO};
+    use num_traits::{Num, Bounded, Zero, FloatConst, Euclid, MulAdd, MulAddAssign, Signed, Inv, Pow, ToPrimitive, NumCast, FromPrimitive};
+    use crate::{BigFloat, MIN_POSITIVE_NORMAL, MIN_POSITIVE, ONE, E, EPSILON, PI, HALF_PI, TWO, INF_NEG, INF_POS, NAN, RoundingMode};
 
     #[cfg(feature = "std")]
     use num_traits::Float;
@@ -986,7 +986,90 @@ mod tests {
         assert_eq!(Euclid::rem_euclid(&-a, &b), ONE);
         assert_eq!(Euclid::rem_euclid(&a, &-b), c);
         assert_eq!(Euclid::rem_euclid(&-a, &-b), ONE);
-    }
 
-    
+        // MulAdd
+        let d1 = BigFloat::parse("-2.1").unwrap();
+        let d2 = BigFloat::parse("3.34").unwrap();
+        let d3 = BigFloat::parse("43.657").unwrap();
+        assert_eq!(MulAdd::mul_add(d1, d2, d3), d1 * d2 + d3);
+
+        // MulAssign
+        let mut d1 = BigFloat::parse("-2.1").unwrap();
+        let d2 = BigFloat::parse("3.34").unwrap();
+        let d3 = BigFloat::parse("43.657").unwrap();
+        let ret = d1 * d2 + d3;
+        MulAddAssign::mul_add_assign(&mut d1, d2, d3);
+        assert_eq!(d1, ret);
+
+        // Inv
+        let d1 = BigFloat::parse("-2.1").unwrap();
+        assert_eq!(Inv::inv(d1), ONE / d1);
+
+        // Signed
+        let d1 = BigFloat::parse("-0.234").unwrap();
+        let d2 = BigFloat::parse("0.234").unwrap();
+        assert_eq!(Signed::abs(&d1), d2);
+        assert_eq!(Signed::abs(&d2), d2);
+
+        let d1 = BigFloat::parse("3.0").unwrap();
+        let d2 = BigFloat::parse("4.0").unwrap();
+        assert!(Signed::abs_sub(&d1, &d2).is_zero());
+        assert_eq!(Signed::abs_sub(&d2, &d1), ONE);
+
+        let d1 = -d1;
+        assert_eq!(Signed::signum(&d2), ONE);
+        assert_eq!(Signed::signum(&d1), -ONE);
+        assert_eq!(Signed::signum(&INF_POS), ONE);
+        assert_eq!(Signed::signum(&INF_NEG), -ONE);
+        assert!(Signed::signum(&NAN).is_nan());
+
+        assert!(Signed::is_positive(&BigFloat::from_i8(12)));
+        assert!(Signed::is_positive(&INF_POS));
+        assert!(!Signed::is_positive(&BigFloat::from_i8(0)));
+        assert!(!Signed::is_positive(&INF_NEG));
+        assert!(!Signed::is_positive(&NAN));
+
+        assert!(Signed::is_negative(&BigFloat::from_i8(-12)));
+        assert!(Signed::is_negative(&INF_NEG));
+        assert!(!Signed::is_negative(&BigFloat::from_i8(0)));
+        assert!(!Signed::is_negative(&INF_POS));
+        assert!(!Signed::is_negative(&NAN));
+
+        // Pow
+        let d1 = BigFloat::parse("3.45").unwrap();
+        let d2 = BigFloat::parse("-4.567").unwrap();
+        assert_eq!(Pow::pow(d1, d2), d1.powf(d2));
+
+        // ToPrimitive
+        let d1 = BigFloat::parse("-356798765.45678").unwrap();
+        assert_eq!(ToPrimitive::to_i64(&d1), Some(-356798765));
+        assert_eq!(ToPrimitive::to_u64(&d1), Some(356798765));
+        assert_eq!(ToPrimitive::to_i128(&d1), Some(-356798765));
+        assert_eq!(ToPrimitive::to_u128(&d1), Some(356798765));
+        assert_eq!(ToPrimitive::to_f32(&d1), Some(-356798765.45678));
+        assert_eq!(ToPrimitive::to_f64(&d1), Some(-356798765.45678));
+
+        // NumCast
+        assert_eq!(NumCast::from(1i8), Some(ONE));
+        assert_eq!(NumCast::from(1u8), Some(ONE));
+        let d2: BigFloat = NumCast::from(-356798765.45678f64).unwrap();
+        assert_eq!(d2, d1);
+
+        let d1 = BigFloat::parse("5.45678").unwrap();
+        let d2: BigFloat = NumCast::from(5.45678f32).unwrap();
+        assert_eq!(BigFloat::round(&d2, 5, RoundingMode::ToEven), d1);
+
+        // FromPrimitive
+        let d1 = BigFloat::parse("-356798765").unwrap();
+        assert_eq!(FromPrimitive::from_i64(-356798765), Some(d1));
+        assert_eq!(FromPrimitive::from_u64(356798765), Some(-d1));
+        assert_eq!(FromPrimitive::from_i128(-356798765), Some(d1));
+        assert_eq!(FromPrimitive::from_u128(356798765), Some(-d1));
+        let d1 = BigFloat::parse("-5.45678").unwrap();
+        let d2 = FromPrimitive::from_f32(-5.45678f32).unwrap();
+        let d2 = BigFloat::round(&d2, 5, RoundingMode::ToEven);
+        assert_eq!(d2, d1);
+        let d1 = BigFloat::parse("-356798765.45678").unwrap();
+        assert_eq!(FromPrimitive::from_f64(-356798765.45678f64), Some(d1));
+    }
 }
