@@ -1038,7 +1038,7 @@ mod tests {
         // Pow
         let d1 = BigFloat::parse("3.45").unwrap();
         let d2 = BigFloat::parse("-4.567").unwrap();
-        assert_eq!(Pow::pow(d1, d2), d1.powf(d2));
+        assert_eq!(Pow::pow(d1, d2), BigFloat::pow(&d1, &d2));
 
         // ToPrimitive
         let d1 = BigFloat::parse("-356798765.45678").unwrap();
