@@ -30,13 +30,13 @@ pub const MIN: BigFloat = BigFloat {inner: Flavor::Value(crate::defs::MIN)};
 /// Minumum possible exponent.
 pub const MIN_EXP: i8 = DECIMAL_MIN_EXPONENT;
 
-/// The smalles positive number.
+/// The smallest positive number.
 pub const MIN_POSITIVE: BigFloat = BigFloat {inner: Flavor::Value(crate::defs::MIN_POSITIVE)};
 
-/// The smalles positive normal number.
+/// The smallest positive normal number.
 pub const MIN_POSITIVE_NORMAL: BigFloat = BigFloat {inner: Flavor::Value(crate::defs::MIN_POSITIVE_NORMAL)};
 
-/// Radix of BigFloat
+/// Radix of BigFloat.
 pub const RADIX: u32 = 10;
 
 /// NaN representation.
@@ -106,9 +106,9 @@ pub const FRAC_2_PI: BigFloat = BigFloat { inner: Flavor::Value(BigFloatNum {
 /// 2 / SQRT(PI)
 pub const FRAC_2_SQRT_PI: BigFloat = BigFloat { inner: Flavor::Value(BigFloatNum {
     sign: 1,
-    e: -(DECIMAL_POSITIONS as i8), 
+    e: -(DECIMAL_POSITIONS as i8) + 1, 
     n: DECIMAL_POSITIONS as i16, 
-    m: [8440, 2585, 6077, 4515, 8079, 8694, 7562, 3547, 8958, 5641]
+    m: [1688, 4517, 1215, 8903, 9615, 5738, 5512, 6709, 3791, 1128]
 })};
 
 /// PI / 3
@@ -161,24 +161,24 @@ pub const LN_2: BigFloat = BigFloat { inner: Flavor::Value(BigFloatNum {
 
 /// log10(E)
 pub const LOG10_E: BigFloat = BigFloat { inner: Flavor::Value(BigFloatNum {
-    sign: -1,
+    sign: 1,
     e: -(DECIMAL_POSITIONS as i8), 
     n: DECIMAL_POSITIONS as i16, 
-    m: [318, 6507, 4129, 4666, 288, 8946, 8323, 1216, 6189, 2386]
+    m: [2944, 5082, 1660, 9189, 1128, 2765, 2518, 1903, 9448, 4342]
 })};
 
 /// log2(E)
 pub const LOG2_E: BigFloat = BigFloat { inner: Flavor::Value(BigFloatNum {
-    sign: -1,
-    e: -(DECIMAL_POSITIONS as i8), 
+    sign: 1,
+    e: -(DECIMAL_POSITIONS as i8) + 1, 
     n: DECIMAL_POSITIONS as i16, 
-    m: [6474, 6789, 169, 9107, 4620, 3637, 1469, 1612, 1764, 7928]
+    m: [7427, 9213, 18, 4681, 5992, 4073, 8963, 4088, 6950, 1442]
 })};
 
 /// The difference between 1 and the smallest floating point number greater than 1.
 pub const EPSILON: BigFloat = BigFloat { inner: Flavor::Value(BigFloatNum {
     sign: 1,
-    e: 0,
+    e: 1 - DECIMAL_POSITIONS as i8,
     n: 1,
     m: [1, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 })};
@@ -2081,5 +2081,47 @@ mod rand_tests {
             assert!(!n.is_subnormal());
             assert!(n.get_exponent() >= exp_from && n.get_exponent() <= exp_to);
         }
+    }
+
+    #[test]
+    fn test_consts() {
+
+        assert!(ONE + ONE == TWO);
+        assert!(ONE - ONE == ZERO);
+        assert!(ONE * ONE == ONE);
+        assert!(ONE / ONE == ONE);
+
+        let mut next_to_one = ONE;
+        let e = next_to_one.get_exponent();
+
+        next_to_one.set_exponent(e + DECIMAL_POSITIONS as i8 - 1);
+        next_to_one += ONE;
+        next_to_one.set_exponent(e);
+        assert!(next_to_one - ONE == EPSILON);
+
+        assert!((E.ln() - ONE).abs() <= EPSILON);
+
+        // PI is tested in example in the docs.
+
+        let ten = BigFloat::from_u8(10);
+
+        assert!((TWO.pow(&LOG2_E) - E).abs() <= EPSILON);
+        assert!((ten.pow(&LOG10_E) - E).abs() <= EPSILON);
+
+        assert!((E.pow(&LN_10) - ten).get_exponent() <= -(DECIMAL_POSITIONS as i8) + 1);    // greater tan epsilon but still small
+        assert!((E.pow(&LN_2) - TWO).abs() <= EPSILON);
+
+        assert!((HALF_PI * TWO - PI).abs() <= EPSILON);
+        assert!((SQRT_2 * SQRT_2 - TWO).abs() <= EPSILON);
+
+        assert!((FRAC_1_PI * PI - ONE).abs() <= EPSILON);
+        assert!((FRAC_1_SQRT_2 * SQRT_2 - ONE).abs() <= EPSILON);
+        assert!((FRAC_2_PI * PI / TWO - ONE).abs() <= EPSILON);
+        assert!((FRAC_2_SQRT_PI * FRAC_2_SQRT_PI / BigFloat::from_u8(4) * PI - ONE).abs() <= EPSILON);
+        assert!((FRAC_PI_3 / PI *  BigFloat::from_u8(3) - ONE).abs() <= EPSILON);
+        assert!((FRAC_PI_4 / PI *  BigFloat::from_u8(4) - ONE).abs() <= EPSILON);
+        assert!((FRAC_PI_6 / PI *  BigFloat::from_u8(6) - ONE).abs() <= EPSILON);
+        assert!((FRAC_PI_8 / PI *  BigFloat::from_u8(8) - ONE).abs() <= EPSILON);
+
     }
 }
