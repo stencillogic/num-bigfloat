@@ -2101,15 +2101,13 @@ mod rand_tests {
 
         assert!((E.ln() - ONE).abs() <= EPSILON);
 
-        // PI is tested in example in the docs.
-
         let ten = BigFloat::from_u8(10);
 
         assert!((TWO.pow(&LOG2_E) - E).abs() <= EPSILON);
         assert!((ten.pow(&LOG10_E) - E).abs() <= EPSILON);
 
-        assert!((E.pow(&LN_10) - ten).get_exponent() <= -(DECIMAL_POSITIONS as i8) + 1);    // greater tan epsilon but still small
-        assert!((E.pow(&LN_2) - TWO).abs() <= EPSILON);
+        assert!((LN_10 - ten.ln()).abs() <= EPSILON);
+        assert!((LN_2 - TWO.ln()).abs() <= EPSILON);
 
         assert!((HALF_PI * TWO - PI).abs() <= EPSILON);
         assert!((SQRT_2 * SQRT_2 - TWO).abs() <= EPSILON);

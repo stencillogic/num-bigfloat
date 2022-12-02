@@ -948,7 +948,7 @@ mod tests {
 
             let d1 = BigFloat::parse("90.0").unwrap();
             assert!(FloatCore::to_radians(d1).sub(&HALF_PI).abs() <= EPSILON);
-            assert!(FloatCore::to_degrees(HALF_PI).sub(&d1).abs() <= EPSILON);
+            assert!(FloatCore::to_degrees(HALF_PI).sub(&d1).abs() <= EPSILON * BigFloat::from_u8(20));
 
             let d1 = BigFloat::parse("-123.123").unwrap();
             assert_eq!(FloatCore::to_radians(d1).to_degrees(), d1);
