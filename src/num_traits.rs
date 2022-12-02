@@ -762,7 +762,7 @@ mod tests {
             assert_eq!(Float::sqrt(d1), d2);
     
             let d1 = BigFloat::parse("3.0").unwrap();
-            assert!(Float::exp(d1).sub(&E.powf(d1)).abs() <= EPSILON);
+            assert!(Float::exp(d1).sub(&E.powf(d1)).get_exponent() <= -38);
     
             let d1 = BigFloat::parse("3.0").unwrap();
             let d2 = BigFloat::parse("2.0").unwrap();
