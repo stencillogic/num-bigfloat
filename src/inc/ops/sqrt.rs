@@ -56,11 +56,7 @@ impl BigFloatInc {
             i -= 1;
         }
         let j = d1.m[i] / 100;
-        let mut n = if i > 0 || j > 0 {
-            SQRT_VALUES[i * 99 + j as usize]
-        } else {
-            *d1
-        };
+        let mut n = if i > 0 || j > 0 { SQRT_VALUES[i * 99 + j as usize] } else { *d1 };
 
         // Newton's method
         let two = Self::two();

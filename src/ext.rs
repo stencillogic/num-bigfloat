@@ -657,11 +657,7 @@ impl BigFloat {
                             // 0*inf
                             NAN
                         } else {
-                            let s = if v1.sign == s2 {
-                                DECIMAL_SIGN_POS
-                            } else {
-                                DECIMAL_SIGN_NEG
-                            };
+                            let s = if v1.sign == s2 { DECIMAL_SIGN_POS } else { DECIMAL_SIGN_NEG };
                             BigFloat {
                                 inner: Flavor::Inf(s),
                             }
@@ -677,22 +673,14 @@ impl BigFloat {
                             // inf*0
                             NAN
                         } else {
-                            let s = if v2.sign == s1 {
-                                DECIMAL_SIGN_POS
-                            } else {
-                                DECIMAL_SIGN_NEG
-                            };
+                            let s = if v2.sign == s1 { DECIMAL_SIGN_POS } else { DECIMAL_SIGN_NEG };
                             BigFloat {
                                 inner: Flavor::Inf(s),
                             }
                         }
                     }
                     Flavor::Inf(s2) => {
-                        let s = if s1 == s2 {
-                            DECIMAL_SIGN_POS
-                        } else {
-                            DECIMAL_SIGN_NEG
-                        };
+                        let s = if s1 == s2 { DECIMAL_SIGN_POS } else { DECIMAL_SIGN_NEG };
                         BigFloat {
                             inner: Flavor::Inf(s),
                         }
@@ -1086,11 +1074,7 @@ impl BigFloat {
                 }
             }
             Flavor::Inf(sign) => {
-                let s = if sign == DECIMAL_SIGN_NEG {
-                    "-Inf"
-                } else {
-                    "Inf"
-                };
+                let s = if sign == DECIMAL_SIGN_NEG { "-Inf" } else { "Inf" };
                 w.write_str(s)
             }
             crate::ext::Flavor::NaN => w.write_str("NaN"),
@@ -1126,17 +1110,10 @@ impl BigFloat {
         }
 
         // sign & exponent
-        let sign = if random::<i8>() & 1 == 0 {
-            DECIMAL_SIGN_POS
-        } else {
-            DECIMAL_SIGN_NEG
-        };
+        let sign = if random::<i8>() & 1 == 0 { DECIMAL_SIGN_POS } else { DECIMAL_SIGN_NEG };
         let exp_range = exp_to as i32 - exp_from as i32;
-        let exp = (if exp_range != 0 {
-            random::<i32>().abs() % exp_range
-        } else {
-            0
-        } + exp_from as i32) as i8;
+        let exp = (if exp_range != 0 { random::<i32>().abs() % exp_range } else { 0 }
+            + exp_from as i32) as i8;
 
         Ok(BigFloat::from_raw_parts(
             mantissa,
@@ -1622,11 +1599,7 @@ macro_rules! impl_int_conv {
         impl BigFloat {
             /// Construct BigFloat from integer value.
             pub fn $from_s(i: $s) -> Self {
-                let sign = if i < 0 {
-                    DECIMAL_SIGN_NEG
-                } else {
-                    DECIMAL_SIGN_POS
-                };
+                let sign = if i < 0 { DECIMAL_SIGN_NEG } else { DECIMAL_SIGN_POS };
                 Self::$from_int(i.abs() as $u, sign)
             }
 

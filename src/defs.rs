@@ -214,11 +214,7 @@ impl BigFloatNum {
         let mut mantissa = ZEROED_MANTISSA;
         let mut n: usize = 0;
         let mut p: i16 = 1;
-        let d = if bytes.len() > DECIMAL_POSITIONS {
-            DECIMAL_POSITIONS
-        } else {
-            bytes.len()
-        };
+        let d = if bytes.len() > DECIMAL_POSITIONS { DECIMAL_POSITIONS } else { bytes.len() };
         for i in 1..d + 1 {
             mantissa[n] += (bytes[d - i] % 10) as i16 * p;
             p *= 10;
@@ -229,11 +225,7 @@ impl BigFloatNum {
         }
 
         BigFloatNum {
-            sign: if sign >= 0 {
-                DECIMAL_SIGN_POS
-            } else {
-                DECIMAL_SIGN_NEG
-            },
+            sign: if sign >= 0 { DECIMAL_SIGN_POS } else { DECIMAL_SIGN_NEG },
             e: exponent,
             n: Self::num_digits(&mantissa),
             m: mantissa,
@@ -248,11 +240,7 @@ impl BigFloatNum {
     pub fn get_mantissa_bytes(&self, bytes: &mut [u8]) {
         let mut n: usize = 0;
         let mut p: i16 = 1;
-        let d = if bytes.len() < self.n as usize {
-            bytes.len()
-        } else {
-            self.n as usize
-        };
+        let d = if bytes.len() < self.n as usize { bytes.len() } else { self.n as usize };
         for i in 1..d + 1 {
             bytes[d - i] = ((self.m[n] / p) % 10) as u8;
             p *= 10;

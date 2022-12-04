@@ -100,11 +100,7 @@ mod tests {
         epsilon.e = -epsilon.n as i8 + 2 - (DECIMAL_POSITIONS as i8);
         for i in 1..1572 {
             d1.m[8] = i;
-            d1.sign = if i & 1 == 0 {
-                DECIMAL_SIGN_POS
-            } else {
-                DECIMAL_SIGN_NEG
-            };
+            d1.sign = if i & 1 == 0 { DECIMAL_SIGN_POS } else { DECIMAL_SIGN_NEG };
             d1.n = if i < 10 {
                 1
             } else if i < 100 {
@@ -130,11 +126,7 @@ mod tests {
         for i in 1..1571 {
             // -pi/2..pi/2
             d1.m[9] = i;
-            d1.sign = if i & 1 == 0 {
-                DECIMAL_SIGN_POS
-            } else {
-                DECIMAL_SIGN_NEG
-            };
+            d1.sign = if i & 1 == 0 { DECIMAL_SIGN_POS } else { DECIMAL_SIGN_NEG };
             d1.n = if i < 10 {
                 1
             } else if i < 100 {
@@ -157,11 +149,7 @@ mod tests {
         for i in 1..3142 {
             // 0..pi
             d1.m[9] = i;
-            d1.sign = if i & 1 == 0 {
-                DECIMAL_SIGN_POS
-            } else {
-                DECIMAL_SIGN_NEG
-            };
+            d1.sign = if i & 1 == 0 { DECIMAL_SIGN_POS } else { DECIMAL_SIGN_NEG };
             d1.n = if i < 10 {
                 1
             } else if i < 100 {
@@ -187,11 +175,7 @@ mod tests {
         epsilon.e = -77; // 1*10^(-38) for arguments close to pi/2 the precision is lost
         for i in 1..9999 {
             d1.m[8] = i;
-            d1.sign = if i & 1 == 0 {
-                DECIMAL_SIGN_POS
-            } else {
-                DECIMAL_SIGN_NEG
-            };
+            d1.sign = if i & 1 == 0 { DECIMAL_SIGN_POS } else { DECIMAL_SIGN_NEG };
             d1.n = if i < 10 {
                 1
             } else if i < 100 {
@@ -214,11 +198,7 @@ mod tests {
         epsilon.e = -78; // 1*10^(-39) for arguments close to pi/2 the precision is lost
         for i in 1..1571 {
             d1.m[8] = i;
-            d1.sign = if i & 1 == 0 {
-                DECIMAL_SIGN_POS
-            } else {
-                DECIMAL_SIGN_NEG
-            };
+            d1.sign = if i & 1 == 0 { DECIMAL_SIGN_POS } else { DECIMAL_SIGN_NEG };
             d1.n = if i < 10 {
                 1
             } else if i < 100 {

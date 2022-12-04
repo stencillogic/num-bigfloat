@@ -54,17 +54,9 @@ impl BigFloatInc {
         } else {
             one
         };
-        let p2 = if frac.n != 0 {
-            BigFloatInc::expf(&frac)?
-        } else {
-            one
-        };
+        let p2 = if frac.n != 0 { BigFloatInc::expf(&frac)? } else { one };
         let ml = Self::result_inversion(p1.mul(&p2), x.sign == DECIMAL_SIGN_NEG, self.sign)?;
-        let mut ret = if x.sign == DECIMAL_SIGN_NEG {
-            one.div(&ml)?
-        } else {
-            ml
-        };
+        let mut ret = if x.sign == DECIMAL_SIGN_NEG { one.div(&ml)? } else { ml };
         ret.sign = self.sign;
         Ok(ret)
     }

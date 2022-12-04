@@ -1250,16 +1250,8 @@ mod tests {
         while mantissa[DECIMAL_PARTS - 1] / 1000 == 0 {
             mantissa[DECIMAL_PARTS - 1] *= 10;
         }
-        let sign = if random::<i8>() & 1 == 0 {
-            DECIMAL_SIGN_POS
-        } else {
-            DECIMAL_SIGN_NEG
-        };
-        let exp = (if exp_range != 0 {
-            random::<i32>().abs() % exp_range
-        } else {
-            0
-        }) - exp_shift;
+        let sign = if random::<i8>() & 1 == 0 { DECIMAL_SIGN_POS } else { DECIMAL_SIGN_NEG };
+        let exp = (if exp_range != 0 { random::<i32>().abs() % exp_range } else { 0 }) - exp_shift;
         BigFloat::from_raw_parts(mantissa, DECIMAL_POSITIONS as i16, sign, exp as i8)
     }
 

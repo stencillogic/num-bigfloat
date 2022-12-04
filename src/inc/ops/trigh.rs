@@ -47,18 +47,15 @@ impl BigFloatInc {
             Ok(ret)
         } else {
             // 0.5*(e^x - e^-x)
-            let e_x1 = if self.sign == DECIMAL_SIGN_NEG {
-                self.inv_sign().exp()
-            } else {
-                self.exp()
-            }
-            .map_err(|e| {
-                if let Error::ExponentOverflow(_) = e {
-                    Error::ExponentOverflow(self.sign)
-                } else {
-                    e
-                }
-            })?;
+            let e_x1 =
+                if self.sign == DECIMAL_SIGN_NEG { self.inv_sign().exp() } else { self.exp() }
+                    .map_err(|e| {
+                        if let Error::ExponentOverflow(_) = e {
+                            Error::ExponentOverflow(self.sign)
+                        } else {
+                            e
+                        }
+                    })?;
             let e_x2 = Self::one().div(&e_x1)?;
             let mut ret = e_x1.sub(&e_x2)?.mul(&ONE_HALF)?;
             ret.sign = self.sign;
@@ -90,11 +87,8 @@ impl BigFloatInc {
             Ok(ret)
         } else {
             // 0.5*(e^x + e^-x)
-            let e_x1 = if self.sign == DECIMAL_SIGN_NEG {
-                self.inv_sign().exp()
-            } else {
-                self.exp()
-            }?;
+            let e_x1 =
+                if self.sign == DECIMAL_SIGN_NEG { self.inv_sign().exp() } else { self.exp() }?;
             let e_x2 = Self::one().div(&e_x1)?;
             e_x1.add(&e_x2)?.mul(&ONE_HALF)
         }
@@ -124,18 +118,11 @@ impl BigFloatInc {
         } else if self.n + self.e as i16 > 2 {
             // int part of x has at least 3 digits
             // this is not the best estimate for optimisation, but it is simple
-            Ok(if self.sign == DECIMAL_SIGN_NEG {
-                Self::one().inv_sign()
-            } else {
-                Self::one()
-            })
+            Ok(if self.sign == DECIMAL_SIGN_NEG { Self::one().inv_sign() } else { Self::one() })
         } else {
             // (e^x - e^-x) / (e^x + e^-x)
-            let e_x1 = if self.sign == DECIMAL_SIGN_NEG {
-                self.inv_sign().exp()
-            } else {
-                self.exp()
-            }?;
+            let e_x1 =
+                if self.sign == DECIMAL_SIGN_NEG { self.inv_sign().exp() } else { self.exp() }?;
             let e_x2 = Self::one().div(&e_x1)?;
             let mut ret = e_x1.sub(&e_x2)?.div(&e_x1.add(&e_x2)?)?;
             ret.sign = self.sign;

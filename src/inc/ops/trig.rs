@@ -140,11 +140,7 @@ impl BigFloatInc {
             let x = *self;
             let d = one.sub(&x.mul(&x)?)?.sqrt()?;
             if d.n == 0 {
-                Ok(if x.sign == DECIMAL_SIGN_NEG {
-                    HALF_PI.inv_sign()
-                } else {
-                    HALF_PI
-                })
+                Ok(if x.sign == DECIMAL_SIGN_NEG { HALF_PI.inv_sign() } else { HALF_PI })
             } else {
                 let arg = x.div(&d)?;
                 arg.atan()
@@ -280,20 +276,12 @@ impl BigFloatInc {
                 der_n = 0;
             }
         }
-        ret.sign = if quadrant > 1 {
-            DECIMAL_SIGN_NEG
-        } else {
-            DECIMAL_SIGN_POS
-        };
+        ret.sign = if quadrant > 1 { DECIMAL_SIGN_NEG } else { DECIMAL_SIGN_POS };
         if q == 0 {
             ret.sign *= self.sign;
         }
         if ret.abs().cmp(&one) > 0 {
-            ret = if ret.sign == DECIMAL_SIGN_NEG {
-                one.inv_sign()
-            } else {
-                one
-            };
+            ret = if ret.sign == DECIMAL_SIGN_NEG { one.inv_sign() } else { one };
         }
         Ok(ret)
     }

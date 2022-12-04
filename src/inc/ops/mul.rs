@@ -170,12 +170,8 @@ impl BigFloatInc {
             let mut m3i = m3.iter_mut().rev();
             let mut m1i = self.m[..j as usize + 1].iter().rev();
             for m3v in m3i.by_ref() {
-                qh = rh * DECIMAL_BASE as i32
-                    + if j >= 0 {
-                        *m1i.next().unwrap() as i32
-                    } else {
-                        0
-                    };
+                qh =
+                    rh * DECIMAL_BASE as i32 + if j >= 0 { *m1i.next().unwrap() as i32 } else { 0 };
                 rh = qh % d;
                 *m3v = (qh / d) as i16;
 
@@ -305,11 +301,7 @@ impl BigFloatInc {
             + rnd_e;
 
         d3.n = DECIMAL_POSITIONS as i16 - DECIMAL_BASE_LOG10 as i16 + j as i16;
-        d3.sign = if self.sign == d2.sign {
-            DECIMAL_SIGN_POS
-        } else {
-            DECIMAL_SIGN_NEG
-        };
+        d3.sign = if self.sign == d2.sign { DECIMAL_SIGN_POS } else { DECIMAL_SIGN_NEG };
 
         if e < DECIMAL_MIN_EXPONENT as i32 {
             return Ok(d3.process_subnormal(e));

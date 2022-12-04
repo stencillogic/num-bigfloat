@@ -533,11 +533,7 @@ impl Euclid for BigFloat {
     fn div_euclid(&self, v: &BigFloat) -> BigFloat {
         let q = BigFloat::int(&self.div(&v));
         if BigFloat::rem(self, v).is_negative() {
-            return if v.is_negative() {
-                q.add(&ONE)
-            } else {
-                q.sub(&ONE)
-            };
+            return if v.is_negative() { q.add(&ONE) } else { q.sub(&ONE) };
         }
         q
     }

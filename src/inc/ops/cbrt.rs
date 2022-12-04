@@ -56,11 +56,7 @@ impl BigFloatInc {
             let part2 = if e < 2 { CBRT_OF_10 } else { CBRT_OF_100 };
 
             // result
-            if self.e < 0 {
-                part1.div(&part2)
-            } else {
-                part1.mul(&part2)
-            }?
+            if self.e < 0 { part1.div(&part2) } else { part1.mul(&part2) }?
         } else {
             part1
         };
@@ -77,11 +73,7 @@ impl BigFloatInc {
             i -= 1;
         }
         let j = d1.m[i] / 100;
-        let mut n = if i > 0 || j > 0 {
-            CBRT_VALUES[i * 99 + j as usize]
-        } else {
-            *d1
-        };
+        let mut n = if i > 0 || j > 0 { CBRT_VALUES[i * 99 + j as usize] } else { *d1 };
 
         // Newton's method: n2 = d1/3/n/n + 2/3*n
         let s = d1.mul(&ONE_THIRD)?;
