@@ -1,0 +1,26 @@
+name: Rust
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build
+      run: cargo build --release --verbose --target x86_64-unknown-linux-gnu
+    - name: Run tests
+      run: cargo test --release --verbose --target x86_64-unknown-linux-gnu
+    - name: Run tests with no features and with no_std
+      run: cargo test --release --verbose --no-default-features --target x86_64-unknown-linux-gnu
+    - name: Run tests with features serde, num_traits and with no_std
+      run: cargo test --release --no-default-features --features num-traits,serde --target x86_64-unknown-linux-gnu
