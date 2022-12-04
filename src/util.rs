@@ -1,6 +1,5 @@
 //! Utility components.
 
-
 /// writable buffer.
 pub struct WritableBuf<'a> {
     buf: &'a mut [u8],
@@ -9,10 +8,7 @@ pub struct WritableBuf<'a> {
 
 impl<'a> WritableBuf<'a> {
     pub fn new(buf: &'a mut [u8]) -> Self {
-        WritableBuf {
-            buf,
-            offset: 0,
-        }
+        WritableBuf { buf, offset: 0 }
     }
 
     pub fn len(&self) -> usize {
@@ -35,13 +31,12 @@ impl<'a> core::fmt::Write for WritableBuf<'a> {
     }
 }
 
-
 /// Concatenate several &str instances from `str_list` into one unsing buffer `buf`.
 pub fn concat_str<'a>(buf: &'a mut [u8], str_list: &[&str]) -> &'a str {
     let mut p = 0;
     for s in str_list {
         let bytes = s.as_bytes();
-        buf[p..p+bytes.len()].copy_from_slice(bytes);
+        buf[p..p + bytes.len()].copy_from_slice(bytes);
         p += bytes.len();
     }
     if buf.len() > p + 1 {

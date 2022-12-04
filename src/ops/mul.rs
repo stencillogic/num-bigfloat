@@ -4,7 +4,6 @@ use crate::defs::BigFloatNum;
 use crate::defs::Error;
 
 impl BigFloatNum {
-
     /// Multiply by d2 and return result of multiplication.
     ///
     /// # Errors
@@ -32,27 +31,25 @@ impl BigFloatNum {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
 
-    use crate::defs::ONE;
+    use crate::defs::DECIMAL_BASE;
+    use crate::defs::DECIMAL_MAX_EXPONENT;
+    use crate::defs::DECIMAL_MIN_EXPONENT;
     use crate::defs::DECIMAL_PARTS;
     use crate::defs::DECIMAL_POSITIONS;
-    use crate::defs::DECIMAL_BASE;
-    use crate::defs::DECIMAL_SIGN_POS;
     use crate::defs::DECIMAL_SIGN_NEG;
-    use crate::defs::DECIMAL_MIN_EXPONENT;
-    use crate::defs::DECIMAL_MAX_EXPONENT;
+    use crate::defs::DECIMAL_SIGN_POS;
+    use crate::defs::ONE;
 
     use super::*;
 
     #[test]
     fn test_mul() {
-
         let mut d1;
         let mut d2;
-        let mut d3: BigFloatNum; 
+        let mut d3: BigFloatNum;
         let mut ref_num;
 
         // 0 * 0
@@ -166,20 +163,20 @@ mod tests {
         assert!(d1.mul(&d2).unwrap_err() == Error::ExponentOverflow(DECIMAL_SIGN_POS));
 
         // no overflow
-        d1.m[DECIMAL_PARTS-1] = DECIMAL_BASE as i16/2-1;
+        d1.m[DECIMAL_PARTS - 1] = DECIMAL_BASE as i16 / 2 - 1;
         assert!(d1.mul(&d2).is_ok());
 
         // no overflow with negative e
-        d1.m[DECIMAL_PARTS-1] = DECIMAL_BASE as i16/2;
+        d1.m[DECIMAL_PARTS - 1] = DECIMAL_BASE as i16 / 2;
         d2.e = -123;
-        d1.e = DECIMAL_MIN_EXPONENT + 122;  // d1.e + d2.e = min_exp - 1
+        d1.e = DECIMAL_MIN_EXPONENT + 122; // d1.e + d2.e = min_exp - 1
         assert!(d1.mul(&d2).is_ok());
 
         // overflow
         d2.e = 123;
         d1.e = DECIMAL_MAX_EXPONENT - d2.e;
         d2.m[0] = 0;
-        d1.m[DECIMAL_PARTS-1] = 0;
+        d1.m[DECIMAL_PARTS - 1] = 0;
         d1.m[5] = 1;
         d2.m[5] = 1;
         d1.n = 21;
@@ -205,21 +202,19 @@ mod tests {
         d2.n = DECIMAL_POSITIONS as i16;
         assert!(d1.mul(&d2).unwrap_err() == Error::ExponentOverflow(DECIMAL_SIGN_POS));
 
-
         // overflow with negative e: 0.0
         d1 = ONE;
         d1.e = DECIMAL_MIN_EXPONENT;
         d2 = ONE;
-        d2.e = DECIMAL_MIN_EXPONENT+49;
+        d2.e = DECIMAL_MIN_EXPONENT + 49;
         assert!(d1.mul(&d2).unwrap().n == 0);
 
         // minimum positive value (subnormal)
-        d2.e = DECIMAL_MIN_EXPONENT+50;
+        d2.e = DECIMAL_MIN_EXPONENT + 50;
         assert!(d1.mul(&d2).unwrap().n == 1);
         //
         // division
         //
-
 
         d1 = BigFloatNum::new();
         d2 = BigFloatNum::new();
@@ -251,7 +246,7 @@ mod tests {
         d1.m[0] = 9998;
         d1.n = 4;
         ref_num.m[0] = 6667;
-        for i in 1..DECIMAL_PARTS-1 {
+        for i in 1..DECIMAL_PARTS - 1 {
             ref_num.m[i] = 6666;
         }
         ref_num.m[DECIMAL_PARTS - 1] = 3332;
@@ -268,7 +263,7 @@ mod tests {
         d2.n = 1;
         d1.m[0] = 1998;
         d1.n = 1;
-        for i in 0..DECIMAL_PARTS-1 {
+        for i in 0..DECIMAL_PARTS - 1 {
             ref_num.m[i] = 0;
         }
         ref_num.m[DECIMAL_PARTS - 1] = 666;
@@ -283,7 +278,7 @@ mod tests {
         d2.m[0] = 33;
         d2.n = 1;
         ref_num.m[0] = 8182;
-        for i in 1..DECIMAL_PARTS-1 {
+        for i in 1..DECIMAL_PARTS - 1 {
             ref_num.m[i] = 8181;
         }
         ref_num.m[DECIMAL_PARTS - 1] = 2787;
@@ -308,7 +303,13 @@ mod tests {
         // 3333 3..3 3333 / 9999
         for i in 0..DECIMAL_PARTS {
             d1.m[i] = 3333;
-            ref_num.m[i] = if i%3 == 1 { 0 } else if i%3 == 2 { 6667 } else { 3333 };
+            ref_num.m[i] = if i % 3 == 1 {
+                0
+            } else if i % 3 == 2 {
+                6667
+            } else {
+                3333
+            };
         }
         d2.m[0] = 9999;
         d2.n = 4;
@@ -334,7 +335,6 @@ mod tests {
         d3 = d1.div(&d2).unwrap();
         assert!(d3.cmp(&ref_num) == 0);
 
-
         // division by divisor with two or more digits
         d1 = BigFloatNum::new();
         d2 = BigFloatNum::new();
@@ -349,7 +349,7 @@ mod tests {
         d2.m[1] = 3333;
         d2.m[0] = 3333;
         d2.n = 8;
-        for i in 0..DECIMAL_PARTS-2 {
+        for i in 0..DECIMAL_PARTS - 2 {
             ref_num.m[i] = if i % 2 > 0 { 3335 } else { 9997 };
         }
         ref_num.m[DECIMAL_PARTS - 2] = 0;
@@ -388,10 +388,10 @@ mod tests {
         d2.sign = DECIMAL_SIGN_POS;
         d2.m[1] = 6666;
         d2.m[0] = 6666;
-        ref_num.m[DECIMAL_PARTS-1] = 1;
-        ref_num.m[DECIMAL_PARTS-3] = 1;
-        ref_num.m[DECIMAL_PARTS-2] = 5000;
-        ref_num.m[DECIMAL_PARTS-4] = 5000;
+        ref_num.m[DECIMAL_PARTS - 1] = 1;
+        ref_num.m[DECIMAL_PARTS - 3] = 1;
+        ref_num.m[DECIMAL_PARTS - 2] = 5000;
+        ref_num.m[DECIMAL_PARTS - 4] = 5000;
         d3 = d1.div(&d2).unwrap();
         assert!(d3.cmp(&ref_num) == 0);
 
@@ -483,7 +483,7 @@ mod tests {
         assert!(d1.div(&d2).unwrap().n == 39);
 
         // zero
-        d2.e = -35+39;
+        d2.e = -35 + 39;
         d1.e = DECIMAL_MIN_EXPONENT;
         assert!(d1.div(&d2).unwrap().n == 0);
 

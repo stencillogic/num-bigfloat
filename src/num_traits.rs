@@ -1,6 +1,13 @@
 //! `num-traits` implementation.
 
+#[cfg(not(feature = "std"))]
+use crate::ext::RAD_TO_DEG_FACTOR;
 use crate::BigFloat;
+use crate::Error;
+#[cfg(feature = "std")]
+use crate::RoundingMode;
+#[cfg(not(feature = "std"))]
+use crate::EPSILON;
 use crate::INF_NEG;
 use crate::INF_POS;
 use crate::MAX;
@@ -8,21 +15,21 @@ use crate::MIN;
 use crate::MIN_POSITIVE_NORMAL;
 use crate::NAN;
 use crate::ONE;
-#[cfg(feature="std")] use crate::PI;
-#[cfg(feature="std")] use crate::RoundingMode;
-#[cfg(feature="std")] use crate::TWO;
+#[cfg(feature = "std")]
+use crate::PI;
+#[cfg(feature = "std")]
+use crate::TWO;
 use crate::ZERO;
-#[cfg(not(feature="std"))] use crate::EPSILON;
-use crate::Error;
-#[cfg(not(feature="std"))] use crate::ext::RAD_TO_DEG_FACTOR;
-use num_traits::Num;
+use core::num::FpCategory;
 use num_traits::bounds::Bounded;
-#[cfg(feature="std")] use num_traits::float::Float;
-#[cfg(not(feature="std"))] use num_traits::float::FloatCore;
-use num_traits::float::FloatConst;
 use num_traits::cast::FromPrimitive;
 use num_traits::cast::NumCast;
 use num_traits::cast::ToPrimitive;
+#[cfg(feature = "std")]
+use num_traits::float::Float;
+use num_traits::float::FloatConst;
+#[cfg(not(feature = "std"))]
+use num_traits::float::FloatCore;
 use num_traits::identities::One;
 use num_traits::identities::Zero;
 use num_traits::ops::euclid::Euclid;
@@ -31,10 +38,9 @@ use num_traits::ops::mul_add::MulAdd;
 use num_traits::ops::mul_add::MulAddAssign;
 use num_traits::pow::Pow;
 use num_traits::sign::Signed;
-use core::num::FpCategory;
+use num_traits::Num;
 
 impl Bounded for BigFloat {
-
     fn min_value() -> Self {
         MIN
     }
@@ -45,7 +51,6 @@ impl Bounded for BigFloat {
 }
 
 impl Zero for BigFloat {
-
     fn zero() -> Self {
         ZERO
     }
@@ -56,15 +61,12 @@ impl Zero for BigFloat {
 }
 
 impl One for BigFloat {
-
     fn one() -> Self {
         ONE
     }
 }
 
-
 impl Num for BigFloat {
-
     type FromStrRadixErr = Error;
 
     fn from_str_radix(str: &str, radix: u32) -> Result<Self, Self::FromStrRadixErr> {
@@ -77,7 +79,6 @@ impl Num for BigFloat {
 }
 
 impl ToPrimitive for BigFloat {
-
     fn to_i64(&self) -> Option<i64> {
         BigFloat::to_i64(self)
     }
@@ -100,15 +101,13 @@ impl ToPrimitive for BigFloat {
 }
 
 impl NumCast for BigFloat {
-
     fn from<T: ToPrimitive>(n: T) -> Option<BigFloat> {
         n.to_f64().map(BigFloat::from_f64)
     }
 }
 
-#[cfg(feature="std")]
+#[cfg(feature = "std")]
 impl Float for BigFloat {
-
     fn nan() -> Self {
         NAN
     }
@@ -352,7 +351,6 @@ impl Float for BigFloat {
 
     /// This function converts BigFloat to f64 and decomposes it.
     fn integer_decode(self) -> (u64, i16, i8) {
-
         let f = self.to_f64();
 
         let bits: u64 = f.to_bits();
@@ -377,63 +375,63 @@ impl FloatConst for BigFloat {
     fn E() -> Self {
         crate::E
     }
- 
+
     fn FRAC_1_PI() -> Self {
         crate::FRAC_1_PI
-    } 
- 
+    }
+
     fn FRAC_1_SQRT_2() -> Self {
         crate::FRAC_1_SQRT_2
-    } 
- 
+    }
+
     fn FRAC_2_PI() -> Self {
         crate::FRAC_2_PI
-    } 
- 
+    }
+
     fn FRAC_2_SQRT_PI() -> Self {
         crate::FRAC_2_SQRT_PI
-    } 
- 
+    }
+
     fn FRAC_PI_2() -> Self {
         crate::HALF_PI
-    } 
- 
+    }
+
     fn FRAC_PI_3() -> Self {
         crate::FRAC_PI_3
-    } 
- 
+    }
+
     fn FRAC_PI_4() -> Self {
         crate::FRAC_PI_4
     }
 
     fn FRAC_PI_6() -> Self {
         crate::FRAC_PI_6
-    } 
- 
+    }
+
     fn FRAC_PI_8() -> Self {
         crate::FRAC_PI_8
-    } 
- 
+    }
+
     fn LN_10() -> Self {
         crate::LN_10
-    } 
- 
+    }
+
     fn LN_2() -> Self {
         crate::LN_2
-    } 
- 
+    }
+
     fn LOG10_E() -> Self {
         crate::LOG10_E
     }
 
     fn LOG2_E() -> Self {
         crate::LOG2_E
-    } 
- 
+    }
+
     fn PI() -> Self {
         crate::PI
-    } 
- 
+    }
+
     fn SQRT_2() -> Self {
         crate::SQRT_2
     }
@@ -498,7 +496,6 @@ impl Pow<BigFloat> for BigFloat {
 }
 
 impl Signed for BigFloat {
-
     /// Note: BigFloat NaN has no sign.
     fn abs(&self) -> Self {
         BigFloat::abs(self)
@@ -532,11 +529,15 @@ impl Signed for BigFloat {
     }
 }
 
-impl Euclid for BigFloat {    
+impl Euclid for BigFloat {
     fn div_euclid(&self, v: &BigFloat) -> BigFloat {
         let q = BigFloat::int(&self.div(&v));
         if BigFloat::rem(self, v).is_negative() {
-            return if v.is_negative() { q.add(&ONE) } else { q.sub(&ONE) };
+            return if v.is_negative() {
+                q.add(&ONE)
+            } else {
+                q.sub(&ONE)
+            };
         }
         q
     }
@@ -551,7 +552,7 @@ impl Euclid for BigFloat {
     }
 }
 
-#[cfg(not(feature="std"))]
+#[cfg(not(feature = "std"))]
 impl FloatCore for BigFloat {
     fn infinity() -> Self {
         INF_POS
@@ -621,9 +622,15 @@ impl FloatCore for BigFloat {
 #[cfg(test)]
 mod tests {
 
+    use crate::{
+        BigFloat, RoundingMode, E, EPSILON, HALF_PI, INF_NEG, INF_POS, MIN_POSITIVE,
+        MIN_POSITIVE_NORMAL, NAN, ONE, PI, TWO,
+    };
     use core::num::FpCategory;
-    use num_traits::{Num, Bounded, Zero, FloatConst, Euclid, MulAdd, MulAddAssign, Signed, Inv, Pow, ToPrimitive, NumCast, FromPrimitive};
-    use crate::{BigFloat, MIN_POSITIVE_NORMAL, MIN_POSITIVE, ONE, E, EPSILON, PI, HALF_PI, TWO, INF_NEG, INF_POS, NAN, RoundingMode};
+    use num_traits::{
+        Bounded, Euclid, FloatConst, FromPrimitive, Inv, MulAdd, MulAddAssign, Num, NumCast, Pow,
+        Signed, ToPrimitive, Zero,
+    };
 
     #[cfg(feature = "std")]
     use num_traits::Float;
@@ -631,10 +638,8 @@ mod tests {
     #[cfg(not(feature = "std"))]
     use num_traits::float::FloatCore;
 
-
     #[test]
     fn test_num_traits() {
-
         // Num
         let s1 = "1.234";
         let d1 = BigFloat::from_str_radix(s1, 10).unwrap();
@@ -643,7 +648,8 @@ mod tests {
         assert!(BigFloat::from_str_radix(s1, 123).is_err());
 
         // Float
-        #[cfg(feature = "std")] {
+        #[cfg(feature = "std")]
+        {
             let nan = <BigFloat as Float>::nan();
             assert!(Float::is_nan(nan));
             assert!(!Float::is_nan(d1));
@@ -662,12 +668,21 @@ mod tests {
             let neg_zero = <BigFloat as Float>::neg_zero();
 
             assert_eq!(zero, neg_zero);
-            assert_eq!(BigFloat::from_f32(7.0)/infinity, zero);
+            assert_eq!(BigFloat::from_f32(7.0) / infinity, zero);
             assert_eq!(zero * BigFloat::from_f32(10.0), zero);
 
-            assert_eq!(<BigFloat as Float>::min_value(), <BigFloat as Bounded>::min_value());
-            assert_eq!(<BigFloat as Float>::min_positive_value(), MIN_POSITIVE_NORMAL);
-            assert_eq!(<BigFloat as Float>::max_value(), <BigFloat as Bounded>::max_value());
+            assert_eq!(
+                <BigFloat as Float>::min_value(),
+                <BigFloat as Bounded>::min_value()
+            );
+            assert_eq!(
+                <BigFloat as Float>::min_positive_value(),
+                MIN_POSITIVE_NORMAL
+            );
+            assert_eq!(
+                <BigFloat as Float>::max_value(),
+                <BigFloat as Bounded>::max_value()
+            );
 
             assert!(<BigFloat as Float>::min_value().is_normal());
             assert!(<BigFloat as Float>::max_value().is_normal());
@@ -795,7 +810,6 @@ mod tests {
             let d3 = BigFloat::parse("5.0").unwrap();
             assert!(Float::hypot(d2, d1).sub(&d3).abs() <= EPSILON);
 
-
             let d1 = BigFloat::parse("0.5").unwrap();
             assert_eq!(Float::sin(d1), BigFloat::sin(&d1));
             assert_eq!(Float::cos(d1), BigFloat::cos(&d1));
@@ -845,96 +859,106 @@ mod tests {
         }
 
         // FloatCore
-        #[cfg(not(feature="std"))] {
+        #[cfg(not(feature = "std"))]
+        {
             let nan = <BigFloat as FloatCore>::nan();
             assert!(FloatCore::is_nan(nan));
             assert!(!FloatCore::is_nan(d1));
-    
+
             let infinity = <BigFloat as FloatCore>::infinity();
             assert!(FloatCore::is_infinite(infinity));
             assert!(!FloatCore::is_finite(infinity));
             assert!(infinity > <BigFloat as Bounded>::max_value());
-    
+
             let neg_infinity = <BigFloat as FloatCore>::neg_infinity();
             assert!(neg_infinity.is_infinite());
             assert!(!neg_infinity.is_finite());
             assert!(neg_infinity < <BigFloat as Bounded>::min_value());
-    
+
             let zero = <BigFloat as Zero>::zero();
             let neg_zero = <BigFloat as FloatCore>::neg_zero();
-    
+
             assert_eq!(zero, neg_zero);
-            assert_eq!(BigFloat::from_f32(7.0)/infinity, zero);
+            assert_eq!(BigFloat::from_f32(7.0) / infinity, zero);
             assert_eq!(zero * BigFloat::from_f32(10.0), zero);
-    
-            assert_eq!(<BigFloat as FloatCore>::min_value(), <BigFloat as Bounded>::min_value());
-            assert_eq!(<BigFloat as FloatCore>::min_positive_value(), MIN_POSITIVE_NORMAL);
-            assert_eq!(<BigFloat as FloatCore>::max_value(), <BigFloat as Bounded>::max_value());
-    
+
+            assert_eq!(
+                <BigFloat as FloatCore>::min_value(),
+                <BigFloat as Bounded>::min_value()
+            );
+            assert_eq!(
+                <BigFloat as FloatCore>::min_positive_value(),
+                MIN_POSITIVE_NORMAL
+            );
+            assert_eq!(
+                <BigFloat as FloatCore>::max_value(),
+                <BigFloat as Bounded>::max_value()
+            );
+
             assert!(<BigFloat as FloatCore>::min_value().is_normal());
             assert!(<BigFloat as FloatCore>::max_value().is_normal());
-    
+
             let subnormal = MIN_POSITIVE;
             assert!(!FloatCore::is_normal(zero));
             assert!(!FloatCore::is_normal(nan));
             assert!(!FloatCore::is_normal(infinity));
             assert!(!FloatCore::is_normal(subnormal));
-    
+
             assert_eq!(FloatCore::classify(d1), FpCategory::Normal);
             assert_eq!(FloatCore::classify(infinity), FpCategory::Infinite);
             assert_eq!(FloatCore::classify(nan), FpCategory::Nan);
             assert_eq!(FloatCore::classify(zero), FpCategory::Zero);
             assert_eq!(FloatCore::classify(subnormal), FpCategory::Subnormal);
-    
+
             let d1 = BigFloat::parse("3.3").unwrap();
             let d2 = BigFloat::parse("3.0").unwrap();
             assert_eq!(FloatCore::floor(d1), d2);
             assert_eq!(FloatCore::floor(d2), d2);
-    
+
             let d1 = BigFloat::parse("3.3").unwrap();
             let d2 = BigFloat::parse("4.0").unwrap();
             assert_eq!(FloatCore::ceil(d1), d2);
             assert_eq!(FloatCore::ceil(d2), d2);
-    
+
             let d1 = BigFloat::parse("3.3").unwrap();
             let d2 = BigFloat::parse("3.0").unwrap();
             assert_eq!(FloatCore::round(d1), d2);
-    
+
             let d1 = BigFloat::parse("3.5").unwrap();
             let d2 = BigFloat::parse("4.0").unwrap();
             assert_eq!(FloatCore::round(d1), d2);
-    
+
             let d1 = BigFloat::parse("-3.3").unwrap();
             let d2 = BigFloat::parse("-3.0").unwrap();
             assert_eq!(FloatCore::round(d1), d2);
-    
+
             let d1 = BigFloat::parse("-3.5").unwrap();
             let d2 = BigFloat::parse("-4.0").unwrap();
             assert_eq!(FloatCore::round(d1), d2);
-    
+
             let d1 = BigFloat::parse("3.7").unwrap();
             let d2 = BigFloat::parse("3.0").unwrap();
             assert_eq!(FloatCore::trunc(d1), d2);
-    
+
             let d1 = BigFloat::parse("-3.7").unwrap();
             let d2 = BigFloat::parse("-3.0").unwrap();
             assert_eq!(FloatCore::trunc(d1), d2);
-    
+
             let d1 = BigFloat::parse("-11.234").unwrap();
             let d2 = BigFloat::parse("-0.234").unwrap();
             assert_eq!(FloatCore::fract(d1), d2);
-    
+
             let d1 = BigFloat::parse("-0.234").unwrap();
             let d2 = BigFloat::parse("0.234").unwrap();
             assert_eq!(FloatCore::abs(d1), d2);
             assert_eq!(FloatCore::abs(d2), d2);
-    
+
             assert_eq!(FloatCore::signum(d2), ONE);
             assert_eq!(FloatCore::signum(d1), -ONE);
             assert_eq!(FloatCore::signum(infinity), ONE);
             assert_eq!(FloatCore::signum(neg_infinity), -ONE);
             assert!(FloatCore::signum(nan).is_nan());
-    
+
             assert!(FloatCore::is_sign_positive(d2));
             assert!(FloatCore::is_sign_positive(infinity));
             assert!(!FloatCore::is_sign_positive(d1));
@@ -948,26 +972,66 @@ mod tests {
 
             let d1 = BigFloat::parse("90.0").unwrap();
             assert!(FloatCore::to_radians(d1).sub(&HALF_PI).abs() <= EPSILON);
-            assert!(FloatCore::to_degrees(HALF_PI).sub(&d1).abs() <= EPSILON * BigFloat::from_u8(20));
+            assert!(
+                FloatCore::to_degrees(HALF_PI).sub(&d1).abs() <= EPSILON * BigFloat::from_u8(20)
+            );
 
             let d1 = BigFloat::parse("-123.123").unwrap();
             assert_eq!(FloatCore::to_radians(d1).to_degrees(), d1);
 
             let d1 = BigFloat::parse("-2.0").unwrap();
-            assert_eq!(FloatCore::integer_decode(d1), FloatCore::integer_decode(-2.0f64));
+            assert_eq!(
+                FloatCore::integer_decode(d1),
+                FloatCore::integer_decode(-2.0f64)
+            );
         }
 
         // FloatConst
-        assert!(<BigFloat as FloatConst>::SQRT_2().mul(&FloatConst::SQRT_2()).sub(&TWO) <= EPSILON);
+        assert!(
+            <BigFloat as FloatConst>::SQRT_2()
+                .mul(&FloatConst::SQRT_2())
+                .sub(&TWO)
+                <= EPSILON
+        );
         assert!(<BigFloat as FloatConst>::FRAC_1_PI().mul(&PI).sub(&ONE) <= EPSILON);
-        assert!(<BigFloat as FloatConst>::FRAC_1_SQRT_2().mul(&<BigFloat as FloatConst>::SQRT_2()).sub(&ONE) <= EPSILON);
+        assert!(
+            <BigFloat as FloatConst>::FRAC_1_SQRT_2()
+                .mul(&<BigFloat as FloatConst>::SQRT_2())
+                .sub(&ONE)
+                <= EPSILON
+        );
         assert!(<BigFloat as FloatConst>::FRAC_2_PI().mul(&PI).sub(&TWO) <= EPSILON);
-        assert!(<BigFloat as FloatConst>::FRAC_2_SQRT_PI().mul(&PI.sqrt()).sub(&TWO) <= EPSILON);
+        assert!(
+            <BigFloat as FloatConst>::FRAC_2_SQRT_PI()
+                .mul(&PI.sqrt())
+                .sub(&TWO)
+                <= EPSILON
+        );
         assert!(<BigFloat as FloatConst>::FRAC_PI_2().mul(&TWO).sub(&PI) <= EPSILON);
-        assert!(<BigFloat as FloatConst>::FRAC_PI_3().mul(&BigFloat::from_i8(3)).sub(&PI) <= EPSILON);
-        assert!(<BigFloat as FloatConst>::FRAC_PI_4().mul(&BigFloat::from_i8(4)).sub(&PI) <= EPSILON);
-        assert!(<BigFloat as FloatConst>::FRAC_PI_6().mul(&BigFloat::from_i8(6)).sub(&PI) <= EPSILON);
-        assert!(<BigFloat as FloatConst>::FRAC_PI_8().mul(&BigFloat::from_i8(8)).sub(&PI) <= EPSILON);
+        assert!(
+            <BigFloat as FloatConst>::FRAC_PI_3()
+                .mul(&BigFloat::from_i8(3))
+                .sub(&PI)
+                <= EPSILON
+        );
+        assert!(
+            <BigFloat as FloatConst>::FRAC_PI_4()
+                .mul(&BigFloat::from_i8(4))
+                .sub(&PI)
+                <= EPSILON
+        );
+        assert!(
+            <BigFloat as FloatConst>::FRAC_PI_6()
+                .mul(&BigFloat::from_i8(6))
+                .sub(&PI)
+                <= EPSILON
+        );
+        assert!(
+            <BigFloat as FloatConst>::FRAC_PI_8()
+                .mul(&BigFloat::from_i8(8))
+                .sub(&PI)
+                <= EPSILON
+        );
         assert!(<BigFloat as FloatConst>::LN_10().sub(&BigFloat::from_i8(10).ln()) <= EPSILON);
         assert!(<BigFloat as FloatConst>::LN_2().sub(&TWO.ln()) <= EPSILON);
         assert!(<BigFloat as FloatConst>::LOG10_E().sub(&E.log10()) <= EPSILON);

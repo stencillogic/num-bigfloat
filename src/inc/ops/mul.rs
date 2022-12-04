@@ -1,19 +1,18 @@
 //! Multiplication and division.
 
-use crate::RoundingMode;
-use crate::inc::inc::BigFloatInc;
 use crate::defs::Error;
-use crate::inc::inc::DECIMAL_PARTS;
-use crate::defs::DECIMAL_BASE_LOG10;
-use crate::inc::inc::DECIMAL_POSITIONS;
 use crate::defs::DECIMAL_BASE;
-use crate::defs::DECIMAL_SIGN_POS;
-use crate::defs::DECIMAL_SIGN_NEG;
-use crate::defs::DECIMAL_MIN_EXPONENT;
+use crate::defs::DECIMAL_BASE_LOG10;
 use crate::defs::DECIMAL_MAX_EXPONENT;
+use crate::defs::DECIMAL_MIN_EXPONENT;
+use crate::defs::DECIMAL_SIGN_NEG;
+use crate::defs::DECIMAL_SIGN_POS;
+use crate::inc::inc::BigFloatInc;
+use crate::inc::inc::DECIMAL_PARTS;
+use crate::inc::inc::DECIMAL_POSITIONS;
+use crate::RoundingMode;
 
 impl BigFloatInc {
-
     /// Multiply by d2 and return result of multiplication.
     ///
     /// # Errors
@@ -34,7 +33,6 @@ impl BigFloatInc {
         }
 
         for (i, v1) in self.m.iter().enumerate() {
-
             d1mi = *v1 as i32;
             if d1mi == 0 {
                 continue;
@@ -81,7 +79,12 @@ impl BigFloatInc {
         }
 
         // round n digits in the beginning before copying [n..n + DECIMAL_PARTS] to d3
-        if Self::round_mantissa(&mut m3[0..n as usize + DECIMAL_PARTS], n as i16 * DECIMAL_BASE_LOG10 as i16, RoundingMode::ToEven, true) {
+        if Self::round_mantissa(
+            &mut m3[0..n as usize + DECIMAL_PARTS],
+            n as i16 * DECIMAL_BASE_LOG10 as i16,
+            RoundingMode::ToEven,
+            true,
+        ) {
             e += 1;
         }
 
@@ -165,9 +168,14 @@ impl BigFloatInc {
             }
 
             let mut m3i = m3.iter_mut().rev();
-            let mut m1i = self.m[..j as usize+1].iter().rev();
+            let mut m1i = self.m[..j as usize + 1].iter().rev();
             for m3v in m3i.by_ref() {
-                qh = rh * DECIMAL_BASE as i32 + if j >= 0 { *m1i.next().unwrap() as i32 } else { 0 };
+                qh = rh * DECIMAL_BASE as i32
+                    + if j >= 0 {
+                        *m1i.next().unwrap() as i32
+                    } else {
+                        0
+                    };
                 rh = qh % d;
                 *m3v = (qh / d) as i16;
 
@@ -199,7 +207,6 @@ impl BigFloatInc {
             j = m - n;
             let mut m3i = m3.iter_mut().rev();
             loop {
-
                 n1j = (n1 as i32 + j) as usize;
 
                 let b2 = buf[n1j + n as usize + 1];
@@ -210,14 +217,13 @@ impl BigFloatInc {
                 rh = qh % v1;
                 qh /= v1;
 
-                if qh >= DECIMAL_BASE as i32
-                    || (qh * v2 > DECIMAL_BASE as i32 * rh + b0 as i32)
-                {
+                if qh >= DECIMAL_BASE as i32 || (qh * v2 > DECIMAL_BASE as i32 * rh + b0 as i32) {
                     qh -= 1;
                     rh += v1;
                     if rh < DECIMAL_BASE as i32
-                        && (qh >= DECIMAL_BASE as i32 
-                            || (qh * v2 > DECIMAL_BASE as i32 * rh + b0 as i32)) {
+                        && (qh >= DECIMAL_BASE as i32
+                            || (qh * v2 > DECIMAL_BASE as i32 * rh + b0 as i32))
+                    {
                         qh -= 1;
                     }
                 }
@@ -226,7 +232,10 @@ impl BigFloatInc {
                 c = 0;
                 k = 0;
                 let (buf1, buf2) = buf.split_at_mut(n2);
-                for (a, b) in buf2[..(n+2) as usize].iter().zip(buf1[n1j..n1j+(n+2) as usize].iter_mut()) {
+                for (a, b) in buf2[..(n + 2) as usize]
+                    .iter()
+                    .zip(buf1[n1j..n1j + (n + 2) as usize].iter_mut())
+                {
                     k = *a as i32 * qh + k / DECIMAL_BASE as i32;
                     let val = k % DECIMAL_BASE as i32 + c as i32;
                     if (*b as i32) < val {
@@ -242,7 +251,10 @@ impl BigFloatInc {
                     // compensate
                     qh -= 1;
                     c = 0;
-                    for (a, b) in buf2[..(n+2) as usize].iter().zip(buf1[n1j..n1j+(n+2) as usize].iter_mut()) {
+                    for (a, b) in buf2[..(n + 2) as usize]
+                        .iter()
+                        .zip(buf1[n1j..n1j + (n + 2) as usize].iter_mut())
+                    {
                         *b += *a + c;
                         if *b >= DECIMAL_BASE as i16 {
                             *b -= DECIMAL_BASE as i16;
@@ -269,10 +281,15 @@ impl BigFloatInc {
         }
 
         let mut rnd_e = 0;
-        if Self::round_mantissa(&mut m3[0..DECIMAL_PARTS+1], DECIMAL_BASE_LOG10 as i16, RoundingMode::ToEven, true) {
+        if Self::round_mantissa(
+            &mut m3[0..DECIMAL_PARTS + 1],
+            DECIMAL_BASE_LOG10 as i16,
+            RoundingMode::ToEven,
+            true,
+        ) {
             rnd_e = 1;
         }
-        d3.m.copy_from_slice(&m3[1..DECIMAL_PARTS+1]);
+        d3.m.copy_from_slice(&m3[1..DECIMAL_PARTS + 1]);
 
         // exponent
         j = 0;

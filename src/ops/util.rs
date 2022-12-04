@@ -1,18 +1,17 @@
 //! Utility functions.
 
 use crate::defs::BigFloatNum;
-use crate::defs::DECIMAL_MAX_EXPONENT;
 use crate::defs::Error;
-use crate::defs::DECIMAL_BASE_LOG10;
-use crate::defs::DECIMAL_POSITIONS;
-use crate::defs::DECIMAL_BASE;
-use crate::defs::DECIMAL_SIGN_POS;
-use crate::defs::DECIMAL_PARTS;
 use crate::defs::RoundingMode;
+use crate::defs::DECIMAL_BASE;
+use crate::defs::DECIMAL_BASE_LOG10;
+use crate::defs::DECIMAL_MAX_EXPONENT;
+use crate::defs::DECIMAL_PARTS;
+use crate::defs::DECIMAL_POSITIONS;
+use crate::defs::DECIMAL_SIGN_POS;
 use crate::inc::inc::BigFloatInc;
 
 impl BigFloatNum {
-
     // compare absolute values of two big floats
     // return positive if d1 > d2, negative if d1 < d2, 0 otherwise
     pub(super) fn abs_cmp(d1: &[i16], d2: &[i16]) -> i16 {
@@ -25,7 +24,6 @@ impl BigFloatNum {
         }
         0
     }
-
 
     // shift m to the right by n digits
     pub(crate) fn shift_right(m: &mut [i16], mut n: usize) {
@@ -107,7 +105,7 @@ impl BigFloatNum {
         d1.maximize_mantissa();
         let mut additional_shift = 0;
         if d1.n < DECIMAL_POSITIONS as i16 + DECIMAL_BASE_LOG10 as i16 {
-            // d1 is subnormal, but it's mantissa still can be shifted 
+            // d1 is subnormal, but it's mantissa still can be shifted
             // because resulting number exponent will be incremented by DECIMAL_BASE_LOG10
             additional_shift = DECIMAL_POSITIONS + DECIMAL_BASE_LOG10 - d1.n as usize;
             if additional_shift > DECIMAL_BASE_LOG10 {
@@ -115,7 +113,12 @@ impl BigFloatNum {
             }
             BigFloatInc::shift_left(&mut d1.m, additional_shift);
         }
-        if BigFloatInc::round_mantissa(&mut d1.m, DECIMAL_BASE_LOG10 as i16, RoundingMode::ToEven, true) {
+        if BigFloatInc::round_mantissa(
+            &mut d1.m,
+            DECIMAL_BASE_LOG10 as i16,
+            RoundingMode::ToEven,
+            true,
+        ) {
             if d1.e == DECIMAL_MAX_EXPONENT {
                 return Err(Error::ExponentOverflow(d1.sign));
             } else {
@@ -132,7 +135,7 @@ impl BigFloatNum {
         Ok(ret)
     }
 
-    // fractional part of d1 
+    // fractional part of d1
     pub(super) fn extract_fract_part(d1: &Self) -> Self {
         let mut fractional = Self::new();
         let e = -(d1.e as i16);
@@ -142,7 +145,8 @@ impl BigFloatNum {
         } else if e > 0 {
             let mut i = 0;
             while i + (DECIMAL_BASE_LOG10 as i16) <= e {
-                fractional.m[i as usize / DECIMAL_BASE_LOG10] = d1.m[i as usize / DECIMAL_BASE_LOG10];
+                fractional.m[i as usize / DECIMAL_BASE_LOG10] =
+                    d1.m[i as usize / DECIMAL_BASE_LOG10];
                 i += DECIMAL_BASE_LOG10 as i16;
             }
             if i < e {
@@ -151,7 +155,8 @@ impl BigFloatNum {
                     t *= 10;
                     i += 1;
                 }
-                fractional.m[i as usize / DECIMAL_BASE_LOG10] += d1.m[i as usize / DECIMAL_BASE_LOG10 as usize] % t;
+                fractional.m[i as usize / DECIMAL_BASE_LOG10] +=
+                    d1.m[i as usize / DECIMAL_BASE_LOG10 as usize] % t;
             }
             fractional.n = Self::num_digits(&fractional.m);
             if fractional.n > 0 {
@@ -177,7 +182,8 @@ impl BigFloatNum {
         }
         let mut t2 = 1;
         while i < d1.n {
-            int.m[int.n as usize / DECIMAL_BASE_LOG10] += (d1.m[i as usize / DECIMAL_BASE_LOG10 as usize] / t % 10) * t2;
+            int.m[int.n as usize / DECIMAL_BASE_LOG10] +=
+                (d1.m[i as usize / DECIMAL_BASE_LOG10 as usize] / t % 10) * t2;
             int.n += 1;
             i += 1;
             t *= 10;
@@ -207,10 +213,14 @@ impl BigFloatNum {
     }
 
     // Round n positons to even, return true if exponent is to be incremented.
-    pub(crate) fn round_mantissa(m: &mut [i16], n: i16, rm: RoundingMode, is_positive: bool) -> bool {
-        
+    pub(crate) fn round_mantissa(
+        m: &mut [i16],
+        n: i16,
+        rm: RoundingMode,
+        is_positive: bool,
+    ) -> bool {
         if n > 0 && n <= DECIMAL_POSITIONS as i16 {
-            let n = n-1;
+            let n = n - 1;
             let mut rem_zero = true;
             // anything before n'th digit becomes 0
             for i in 0..n as usize / DECIMAL_BASE_LOG10 {
@@ -233,41 +243,49 @@ impl BigFloatNum {
                 rem_zero = false;
             }
 
-            let num2 = if i1 < m.len() {
-                m[i1] / t2 % 10
-            } else {
-                0
-            };
+            let num2 = if i1 < m.len() { m[i1] / t2 % 10 } else { 0 };
 
             let eq5 = num == 5 && rem_zero;
             let gt5 = num > 5 || (num == 5 && !rem_zero);
             let gte5 = gt5 || eq5;
 
             match rm {
-                RoundingMode::Up => if gte5 && is_positive || gt5 && !is_positive {
-                    // add 1
-                    c = true;
-                },
-                RoundingMode::Down => if gt5 && is_positive || gte5 && !is_positive {
-                    // add 1
-                    c = true;
-                },
-                RoundingMode::FromZero => if gte5 {
-                    // add 1
-                    c = true;
-                },
-                RoundingMode::ToZero => if gt5 {
-                    // add 1
-                    c = true;
-                },
-                RoundingMode::ToEven => if gt5 || (eq5 && num2 & 1 != 0) {
-                    // add 1
-                    c = true;
-                },
-                RoundingMode::ToOdd => if gt5 || (eq5 && num2 & 1 == 0) {
-                    // add 1
-                    c = true;
-                },
+                RoundingMode::Up => {
+                    if gte5 && is_positive || gt5 && !is_positive {
+                        // add 1
+                        c = true;
+                    }
+                }
+                RoundingMode::Down => {
+                    if gt5 && is_positive || gte5 && !is_positive {
+                        // add 1
+                        c = true;
+                    }
+                }
+                RoundingMode::FromZero => {
+                    if gte5 {
+                        // add 1
+                        c = true;
+                    }
+                }
+                RoundingMode::ToZero => {
+                    if gt5 {
+                        // add 1
+                        c = true;
+                    }
+                }
+                RoundingMode::ToEven => {
+                    if gt5 || (eq5 && num2 & 1 != 0) {
+                        // add 1
+                        c = true;
+                    }
+                }
+                RoundingMode::ToOdd => {
+                    if gt5 || (eq5 && num2 & 1 == 0) {
+                        // add 1
+                        c = true;
+                    }
+                }
             };
 
             if c {
@@ -300,11 +318,10 @@ impl BigFloatNum {
                 return true;
             } else {
                 // just remove trailing digits
-                let t = t*10;
+                let t = t * 10;
                 m[i] = (m[i] / t) * t;
             }
         }
         false
     }
 }
-

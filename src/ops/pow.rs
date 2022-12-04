@@ -3,9 +3,7 @@
 use crate::defs::BigFloatNum;
 use crate::defs::Error;
 
-
 impl BigFloatNum {
-
     /// Return BigFloat to the power of `d1`.
     ///
     /// # Errors
@@ -21,25 +19,22 @@ impl BigFloatNum {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
 
     use super::*;
-    use crate::defs::DECIMAL_SIGN_POS;
     use crate::defs::DECIMAL_POSITIONS;
     use crate::defs::DECIMAL_SIGN_NEG;
+    use crate::defs::DECIMAL_SIGN_POS;
 
     #[test]
     fn test_pow() {
-
         let mut d1;
         let mut d2;
         let mut ref_num;
         let one = BigFloatNum::one();
         let mut epsilon = BigFloatNum::one();
-        epsilon.e = - epsilon.n as i8 + 1 - (DECIMAL_POSITIONS as i8);
-
+        epsilon.e = -epsilon.n as i8 + 1 - (DECIMAL_POSITIONS as i8);
 
         d1 = BigFloatNum::new();
         d2 = BigFloatNum::new();
@@ -52,7 +47,6 @@ mod tests {
         d1.n = 15;
         d1.e = -12;
         d2.pow(&d1).unwrap();
-
 
         // zero number
         d1 = BigFloatNum::new();
@@ -108,9 +102,9 @@ mod tests {
         ref_num.m[3] = 8828;
         ref_num.m[4] = 46;
         ref_num.m[5] = 873;
-        ref_num.m[6] = 5984; 
-        ref_num.m[7] = 9057; 
-        ref_num.m[8] = 4749; 
+        ref_num.m[6] = 5984;
+        ref_num.m[7] = 9057;
+        ref_num.m[8] = 4749;
         ref_num.m[9] = 1459;
         ref_num.n = 40;
         ref_num.e = -2;
@@ -177,8 +171,8 @@ mod tests {
             for j in 0..10 {
                 d2.m[2] = i;
                 d2.m[5] = i;
-                d1.m[1] = j*1000;
-                d1.m[2] = 10+j;
+                d1.m[1] = j * 1000;
+                d1.m[2] = 10 + j;
                 inv = one.div(&d1).unwrap();
                 ret = d2.pow(&d1).unwrap();
                 ret = ret.pow(&inv).unwrap();

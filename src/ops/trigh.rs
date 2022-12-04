@@ -3,9 +3,7 @@
 use crate::defs::BigFloatNum;
 use crate::defs::Error;
 
-
 impl BigFloatNum {
-
     /// Returns hyperbolic sine of a number.
     ///
     /// # Errors
@@ -75,7 +73,6 @@ impl BigFloatNum {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
 
@@ -86,16 +83,13 @@ mod tests {
 
     #[test]
     fn test_trigh() {
-
         let mut d1;
         let mut epsilon = BigFloatNum::one();
-        epsilon.e = - epsilon.n as i8 + 1 - (DECIMAL_POSITIONS as i8);
-
+        epsilon.e = -epsilon.n as i8 + 1 - (DECIMAL_POSITIONS as i8);
 
         //
         // sinh, asinh
         //
-
 
         d1 = BigFloatNum::new();
         d1.m[7] = 123;
@@ -103,18 +97,28 @@ mod tests {
         epsilon.e = -76; // 1*10^(-37)
         for i in 1..100 {
             d1.m[8] = i;
-            d1.sign = if i & 1 == 0 {DECIMAL_SIGN_POS} else {DECIMAL_SIGN_NEG};
-            d1.n = if i < 10 {1} else if i<100 {2} else if i<1000 {3} else {4} + 32;
+            d1.sign = if i & 1 == 0 {
+                DECIMAL_SIGN_POS
+            } else {
+                DECIMAL_SIGN_NEG
+            };
+            d1.n = if i < 10 {
+                1
+            } else if i < 100 {
+                2
+            } else if i < 1000 {
+                3
+            } else {
+                4
+            } + 32;
             let s = d1.sinh().unwrap();
             let c = s.asinh().unwrap();
             assert!(d1.sub(&c).unwrap().abs().cmp(&epsilon) <= 0);
         }
 
-
         //
         // cosh, acosh
         //
-
 
         d1 = BigFloatNum::new();
         d1.m[7] = 123;
@@ -122,7 +126,11 @@ mod tests {
         epsilon.e = -74; // 1*10^(-35)
         for i in 0..100 {
             d1.m[8] = 10 + i;
-            d1.sign = if i & 1 == 0 {DECIMAL_SIGN_POS} else {DECIMAL_SIGN_NEG};
+            d1.sign = if i & 1 == 0 {
+                DECIMAL_SIGN_POS
+            } else {
+                DECIMAL_SIGN_NEG
+            };
             d1.n = BigFloatNum::num_digits(&d1.m);
             let s = d1.cosh().unwrap();
             let mut c = s.acosh().unwrap();
@@ -137,11 +145,9 @@ mod tests {
         d1.e = -37;
         assert!(d1.acosh().unwrap_err() == Error::InvalidArgument);
 
-
-        // 
+        //
         // tanh and atanh
         //
-
 
         d1 = BigFloatNum::new();
         d1.m[7] = 123;
@@ -149,8 +155,20 @@ mod tests {
         epsilon.e = -75; // 1*10^(-36)
         for i in 0..1000 {
             d1.m[8] = i;
-            d1.sign = if i & 1 == 0 {DECIMAL_SIGN_POS} else {DECIMAL_SIGN_NEG};
-            d1.n = if i < 10 {1} else if i<100 {2} else if i<1000 {3} else {4} + 32;
+            d1.sign = if i & 1 == 0 {
+                DECIMAL_SIGN_POS
+            } else {
+                DECIMAL_SIGN_NEG
+            };
+            d1.n = if i < 10 {
+                1
+            } else if i < 100 {
+                2
+            } else if i < 1000 {
+                3
+            } else {
+                4
+            } + 32;
             let s = d1.tanh().unwrap();
             let c = s.atanh().unwrap();
             assert!(d1.sub(&c).unwrap().abs().cmp(&epsilon) <= 0);

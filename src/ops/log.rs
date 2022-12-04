@@ -1,13 +1,12 @@
 //! Logarithms.
 
 use crate::defs::BigFloatNum;
+use crate::defs::Error;
 use crate::defs::DECIMAL_BASE;
 use crate::defs::DECIMAL_PARTS;
 use crate::defs::DECIMAL_POSITIONS;
-use crate::defs::Error;
 
 impl BigFloatNum {
-
     /// Returns natural logarithm of a number.
     ///
     /// # Errors
@@ -48,7 +47,6 @@ impl BigFloatNum {
         Self::from_big_float_inc(ret)
     }
 
-
     /// Returns logarithm of base 2 of a number.
     ///
     /// # Errors
@@ -58,7 +56,7 @@ impl BigFloatNum {
     /// InvalidArgument - when `self` or `b` is negative or zero.
     pub fn log2(&self) -> Result<Self, Error> {
         let mut two = Self::new();
-        two.m[DECIMAL_PARTS - 1] = DECIMAL_BASE as i16/5;
+        two.m[DECIMAL_PARTS - 1] = DECIMAL_BASE as i16 / 5;
         two.n = DECIMAL_POSITIONS as i16;
         two.e = 1 - DECIMAL_POSITIONS as i8;
         self.log(&two)
@@ -73,7 +71,7 @@ impl BigFloatNum {
     /// InvalidArgument - when `self` or `b` is negative or zero.
     pub fn log10(&self) -> Result<Self, Error> {
         let mut ten = Self::new();
-        ten.m[DECIMAL_PARTS - 1] = DECIMAL_BASE as i16/10;
+        ten.m[DECIMAL_PARTS - 1] = DECIMAL_BASE as i16 / 10;
         ten.n = DECIMAL_POSITIONS as i16;
         ten.e = 2 - DECIMAL_POSITIONS as i8;
         self.log(&ten)
@@ -84,19 +82,18 @@ impl BigFloatNum {
 mod tests {
 
     use super::*;
-    use crate::defs::E;
     use crate::defs::DECIMAL_POSITIONS;
     use crate::defs::DECIMAL_SIGN_NEG;
+    use crate::defs::E;
 
     #[test]
     fn test_log() {
-
         let mut d1;
         let mut d2;
         let one = BigFloatNum::one();
         let two = one.add(&one).unwrap();
         let mut epsilon = BigFloatNum::one();
-        epsilon.e = - epsilon.n as i8 + 1 - (DECIMAL_POSITIONS as i8);
+        epsilon.e = -epsilon.n as i8 + 1 - (DECIMAL_POSITIONS as i8);
 
         // arg = 0
         d1 = BigFloatNum::new();
@@ -116,20 +113,35 @@ mod tests {
         assert!(two.log(&d1).unwrap_err() == Error::InvalidArgument);
 
         // ln of E = 1
-        epsilon.e = -77;    // 1*10^(-39)
+        epsilon.e = -77; // 1*10^(-39)
         assert!(E.ln().unwrap().sub(&one).unwrap().abs().cmp(&epsilon) <= 0);
 
         // log2 of 4 = 2
         let four = two.add(&two).unwrap();
-        assert!(four.log(&two).unwrap().sub(&two).unwrap().abs().cmp(&epsilon) <= 0);
+        assert!(
+            four.log(&two)
+                .unwrap()
+                .sub(&two)
+                .unwrap()
+                .abs()
+                .cmp(&epsilon)
+                <= 0
+        );
 
         // log0.5 of 4 = -2
         let half = one.div(&two).unwrap();
-        assert!(four.log(&half).unwrap().add(&two).unwrap().abs().cmp(&epsilon) <= 0);
+        assert!(
+            four.log(&half)
+                .unwrap()
+                .add(&two)
+                .unwrap()
+                .abs()
+                .cmp(&epsilon)
+                <= 0
+        );
 
         // base = 1
         assert!(four.log(&one).unwrap_err() == Error::DivisionByZero);
-
 
         d2 = BigFloatNum::new();
         d2.m[0] = 4567;
@@ -146,9 +158,17 @@ mod tests {
         for i in 1..1000 {
             d2.m[2] = i;
             d2.m[9] = i;
-            d2.n = if i < 10 {1} else if i<100 {2} else if i<1000 {3} else {4} + 36;
-            d2.e = -50 + (i%100) as i8;
-            epsilon.e = - epsilon.n as i8 + 4 - (DECIMAL_POSITIONS as i8) + d2.e + d2.n as i8;
+            d2.n = if i < 10 {
+                1
+            } else if i < 100 {
+                2
+            } else if i < 1000 {
+                3
+            } else {
+                4
+            } + 36;
+            d2.e = -50 + (i % 100) as i8;
+            epsilon.e = -epsilon.n as i8 + 4 - (DECIMAL_POSITIONS as i8) + d2.e + d2.n as i8;
             let ret = d2.ln().unwrap();
             d1 = ret.exp().unwrap();
             assert!(d2.sub(&d1).unwrap().abs().cmp(&epsilon) < 0);
@@ -165,7 +185,7 @@ mod tests {
         }
 
         // log2
-        epsilon.e = - epsilon.n as i8 + 1 - (DECIMAL_POSITIONS as i8);
+        epsilon.e = -epsilon.n as i8 + 1 - (DECIMAL_POSITIONS as i8);
         assert!(four.log2().unwrap().sub(&two).unwrap().abs().cmp(&epsilon) <= 0);
 
         // log10

@@ -1,30 +1,29 @@
 //! Hyperbolic trigonometric functions and inverse hyperbolic trigonometric functions.
 
+use crate::defs::Error;
+use crate::defs::DECIMAL_SIGN_NEG;
+use crate::defs::DECIMAL_SIGN_POS;
 use crate::inc::inc::BigFloatInc;
 use crate::inc::inc::DECIMAL_POSITIONS;
-use crate::defs::DECIMAL_SIGN_NEG;
-use crate::defs::Error;
-use crate::defs::DECIMAL_SIGN_POS;
-use crate::inc::ops::tables::tanh_const::TANH_VALUES;
 use crate::inc::ops::tables::asinh_const::ASINH_VALUES;
 use crate::inc::ops::tables::fact_const::INVFACT_VALUES;
+use crate::inc::ops::tables::tanh_const::TANH_VALUES;
 
 const ONE_HALF: BigFloatInc = BigFloatInc {
     m: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5000],
-    n: DECIMAL_POSITIONS as i16, 
-    sign: DECIMAL_SIGN_POS, 
+    n: DECIMAL_POSITIONS as i16,
+    sign: DECIMAL_SIGN_POS,
     e: -(DECIMAL_POSITIONS as i8),
 };
 
 const LN_OF_2: BigFloatInc = BigFloatInc {
     m: [13, 755, 6568, 5817, 1214, 7232, 941, 9453, 559, 4718, 6931],
-    n: DECIMAL_POSITIONS as i16, 
-    sign: DECIMAL_SIGN_POS, 
+    n: DECIMAL_POSITIONS as i16,
+    sign: DECIMAL_SIGN_POS,
     e: -(DECIMAL_POSITIONS as i8),
 };
 
 impl BigFloatInc {
-
     /// Returns hyperbolic sine of a number.
     ///
     /// # Errors
@@ -36,9 +35,9 @@ impl BigFloatInc {
             let mut ret = *self;
             let dxx = self.mul(self)?;
             let mut dx = ret;
-            for i in 1..INVFACT_VALUES.len()/2 {
+            for i in 1..INVFACT_VALUES.len() / 2 {
                 dx = dx.mul(&dxx)?;
-                let p = dx.mul(&INVFACT_VALUES[i*2])?;
+                let p = dx.mul(&INVFACT_VALUES[i * 2])?;
                 let val = ret.add(&p)?;
                 if val.cmp(&ret) == 0 {
                     break;
@@ -52,10 +51,13 @@ impl BigFloatInc {
                 self.inv_sign().exp()
             } else {
                 self.exp()
-            }.map_err(|e| if let Error::ExponentOverflow(_) = e {
-                Error::ExponentOverflow(self.sign)
-            } else {
-                e
+            }
+            .map_err(|e| {
+                if let Error::ExponentOverflow(_) = e {
+                    Error::ExponentOverflow(self.sign)
+                } else {
+                    e
+                }
             })?;
             let e_x2 = Self::one().div(&e_x1)?;
             let mut ret = e_x1.sub(&e_x2)?.mul(&ONE_HALF)?;
@@ -76,8 +78,8 @@ impl BigFloatInc {
             let mut ret = one;
             let dxx = self.mul(self)?;
             let mut dx = dxx;
-            for i in 0..INVFACT_VALUES.len()/2-1 {
-                let p = dx.mul(&INVFACT_VALUES[i*2 + 1])?;
+            for i in 0..INVFACT_VALUES.len() / 2 - 1 {
+                let p = dx.mul(&INVFACT_VALUES[i * 2 + 1])?;
                 let val = ret.add(&p)?;
                 if val.cmp(&ret) == 0 {
                     break;
@@ -162,7 +164,7 @@ impl BigFloatInc {
                 ret = val;
             }
             Ok(ret)
-        } else if (self.e as i16 + self.n - 1)*2 >= DECIMAL_POSITIONS as i16 {
+        } else if (self.e as i16 + self.n - 1) * 2 >= DECIMAL_POSITIONS as i16 {
             // sign(x)*(ln(|x|) + ln(2))
             let x = self.abs();
             let mut ret = x.ln()?.add(&LN_OF_2)?;
@@ -176,7 +178,7 @@ impl BigFloatInc {
             let sq = xx1.sqrt()?;
             let arg = x.add(&sq)?;
             if arg.n == 0 {
-                Err(Error::ExponentOverflow(DECIMAL_SIGN_NEG)) 
+                Err(Error::ExponentOverflow(DECIMAL_SIGN_NEG))
             } else {
                 let mut ret = arg.ln()?;
                 ret.sign = self.sign;
@@ -197,7 +199,7 @@ impl BigFloatInc {
         if x.cmp(&one) < 0 {
             return Err(Error::InvalidArgument);
         }
-        if (x.e as i16 + x.n - 1)*2 >= DECIMAL_POSITIONS as i16 {
+        if (x.e as i16 + x.n - 1) * 2 >= DECIMAL_POSITIONS as i16 {
             // ln(x) + ln(2)
             x.ln()?.add(&LN_OF_2)
         } else {

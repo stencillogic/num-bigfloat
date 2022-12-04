@@ -1,14 +1,13 @@
 //! Other operations.
 
-use crate::inc::inc::BigFloatInc;
-use crate::defs::DECIMAL_BASE_LOG10;
 use crate::defs::DECIMAL_BASE;
-use crate::defs::DECIMAL_SIGN_POS;
+use crate::defs::DECIMAL_BASE_LOG10;
 use crate::defs::DECIMAL_SIGN_NEG;
+use crate::defs::DECIMAL_SIGN_POS;
+use crate::inc::inc::BigFloatInc;
 
 impl BigFloatInc {
-
-    /// Return absolute value. 
+    /// Return absolute value.
     pub fn abs(&self) -> Self {
         let mut ret = *self;
         if ret.sign == DECIMAL_SIGN_NEG {
@@ -17,7 +16,7 @@ impl BigFloatInc {
         ret
     }
 
-    /// Return absolute value. 
+    /// Return absolute value.
     pub fn inv_sign(&self) -> Self {
         let mut ret = *self;
         if ret.sign == DECIMAL_SIGN_NEG {
@@ -27,7 +26,6 @@ impl BigFloatInc {
         }
         ret
     }
-
 
     /// Compare to d2.
     /// Returns positive if self > d2, negative if self < d2, 0 otherwise.
@@ -106,14 +104,14 @@ impl BigFloatInc {
             n1 -= 1;
             n2 -= 1;
         }
-        while n1 >=0 {
+        while n1 >= 0 {
             v1 = (d1[n1 as usize / DECIMAL_BASE_LOG10] / t1) % 10;
             if v1 != 0 {
                 return 1;
             }
             n1 -= 1;
         }
-        while n2 >=0 {
+        while n2 >= 0 {
             v2 = (d2[n2 as usize / DECIMAL_BASE_LOG10] / t2) % 10;
             if v2 != 0 {
                 return -1;

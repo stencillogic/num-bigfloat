@@ -1,27 +1,25 @@
 //! Logarithms.
 
-use crate::inc::inc::BigFloatInc;
 use crate::defs::Error;
-use crate::inc::inc::DECIMAL_POSITIONS;
 use crate::defs::DECIMAL_BASE;
-use crate::defs::DECIMAL_SIGN_POS;
-use crate::defs::DECIMAL_SIGN_NEG;
-use crate::defs::DECIMAL_MIN_EXPONENT;
 use crate::defs::DECIMAL_MAX_EXPONENT;
+use crate::defs::DECIMAL_MIN_EXPONENT;
+use crate::defs::DECIMAL_SIGN_NEG;
+use crate::defs::DECIMAL_SIGN_POS;
+use crate::inc::inc::BigFloatInc;
+use crate::inc::inc::DECIMAL_POSITIONS;
+use crate::inc::inc::E;
 use crate::inc::ops::tables::atan_const::ATAN_VALUES1;
 use crate::inc::ops::tables::ln_const::LN_VALUES;
-use crate::inc::inc::E;
-
 
 const LN_OF_10: BigFloatInc = BigFloatInc {
-    m: [1015, 7601, 6420, 6843, 1454, 1799, 6840, 4045, 9299, 5850, 2302] , 
-    n: 44, 
-    sign: DECIMAL_SIGN_POS, 
+    m: [1015, 7601, 6420, 6843, 1454, 1799, 6840, 4045, 9299, 5850, 2302],
+    n: 44,
+    sign: DECIMAL_SIGN_POS,
     e: -43,
 };
 
 impl BigFloatInc {
-
     /// Returns natural logarithm of a number.
     ///
     /// # Errors
@@ -39,8 +37,11 @@ impl BigFloatInc {
         let mut s = self.e as i16 - 1 + self.n;
         if s != 0 {
             // check if s fits in single "digit"
-            assert!(DECIMAL_MAX_EXPONENT as i16 + 1 + (DECIMAL_POSITIONS as i16) < DECIMAL_BASE as i16 && 
-               DECIMAL_POSITIONS as i16 + 1 - (DECIMAL_MIN_EXPONENT as i16) < DECIMAL_BASE as i16);
+            assert!(
+                DECIMAL_MAX_EXPONENT as i16 + 1 + (DECIMAL_POSITIONS as i16) < DECIMAL_BASE as i16
+                    && DECIMAL_POSITIONS as i16 + 1 - (DECIMAL_MIN_EXPONENT as i16)
+                        < DECIMAL_BASE as i16
+            );
             if s > 0 {
                 add.m[0] = s;
             } else {
@@ -60,7 +61,7 @@ impl BigFloatInc {
         ml.e = 1 - ml.n as i8;
 
         // arctanh series
-        ml = ml.sub(&one)?.div(&ml.add(&one)?)?;    // (x-1)/(x+1)
+        ml = ml.sub(&one)?.div(&ml.add(&one)?)?; // (x-1)/(x+1)
 
         // further reduction: arctanh(x) = arctanh(s) + arctanh((x - s) / (1 - x*s))
         let (idx, mut dx) = Self::get_trig_params(&mut ml, 0);
@@ -73,14 +74,14 @@ impl BigFloatInc {
         for i in 0..ATAN_VALUES1.len() {
             dx = dx.mul(&dxx)?;
             let mut poly_coeff = ATAN_VALUES1[i];
-            poly_coeff.sign = DECIMAL_SIGN_POS;     // same as for atan, but always positive
+            poly_coeff.sign = DECIMAL_SIGN_POS; // same as for atan, but always positive
             let p = poly_coeff.mul(&dx)?;
             let val = ret.add(&p)?;
             if val.cmp(&ret) == 0 {
                 break;
             }
             ret = val;
-            assert!(i != ATAN_VALUES1.len()-2);
+            assert!(i != ATAN_VALUES1.len() - 2);
         }
         ret = ret.add(&atanh_s)?.mul(&two)?.add(&add)?;
 

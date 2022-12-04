@@ -1,45 +1,43 @@
 //! Trigonometric functions and inverse trigonometric functions.
 
-use crate::inc::inc::BigFloatInc;
 use crate::defs::Error;
-use crate::defs::DECIMAL_SIGN_POS;
 use crate::defs::DECIMAL_SIGN_NEG;
+use crate::defs::DECIMAL_SIGN_POS;
+use crate::inc::inc::BigFloatInc;
+use crate::inc::ops::tables::asin_const::ASIN_VALUES;
 use crate::inc::ops::tables::atan_const::ATAN_VALUES1;
 use crate::inc::ops::tables::atan_const::ATAN_VALUES2;
+use crate::inc::ops::tables::fact_const::INVFACT_VALUES;
 use crate::inc::ops::tables::sin_const::SIN_VALUES1;
 use crate::inc::ops::tables::sin_const::SIN_VALUES2;
-use crate::inc::ops::tables::asin_const::ASIN_VALUES;
 use crate::inc::ops::tables::tan_const::TAN_VALUES;
-use crate::inc::ops::tables::fact_const::INVFACT_VALUES;
-
 
 const HALF_PI: BigFloatInc = BigFloatInc {
     m: [5846, 2098, 5144, 6397, 1691, 3132, 6192, 4896, 2679, 7963, 1570],
-    n: 44, 
-    sign: DECIMAL_SIGN_POS, 
+    n: 44,
+    sign: DECIMAL_SIGN_POS,
     e: -43,
 };
 const PI: BigFloatInc = BigFloatInc {
     m: [1694, 4197, 288, 2795, 3383, 6264, 2384, 9793, 5358, 5926, 3141],
-    n: 44, 
-    sign: DECIMAL_SIGN_POS, 
+    n: 44,
+    sign: DECIMAL_SIGN_POS,
     e: -43,
 };
 const PI2: BigFloatInc = BigFloatInc {
     m: [3388, 8394, 576, 5590, 6766, 2528, 4769, 9586, 717, 1853, 6283],
-    n: 44, 
-    sign: DECIMAL_SIGN_POS, 
+    n: 44,
+    sign: DECIMAL_SIGN_POS,
     e: -43,
 };
-const SQRT_2: BigFloatInc = BigFloatInc { 
-    sign: 1, 
-    e: -43, 
-    n: 44, 
-    m: [6719, 8569, 9807, 2096, 8724, 168, 488, 3095, 6237, 2135, 1414] 
+const SQRT_2: BigFloatInc = BigFloatInc {
+    sign: 1,
+    e: -43,
+    n: 44,
+    m: [6719, 8569, 9807, 2096, 8724, 168, 488, 3095, 6237, 2135, 1414],
 };
 
 impl BigFloatInc {
-
     /// Returns sine of a number. Argument is an angle in radians.
     ///
     /// # Errors
@@ -103,7 +101,9 @@ impl BigFloatInc {
         // tan(x)
         let d = BigFloatInc::one().sub(&tan_s.mul(&tan_dx)?)?;
         let mut ret = tan_s.add(&tan_dx)?.div(&d)?;
-        if (quadrant == 1 && self.sign == DECIMAL_SIGN_POS) || (quadrant == 0 && self.sign == DECIMAL_SIGN_NEG) {
+        if (quadrant == 1 && self.sign == DECIMAL_SIGN_POS)
+            || (quadrant == 0 && self.sign == DECIMAL_SIGN_NEG)
+        {
             ret.sign = DECIMAL_SIGN_NEG;
         }
         Ok(ret)
@@ -140,7 +140,11 @@ impl BigFloatInc {
             let x = *self;
             let d = one.sub(&x.mul(&x)?)?.sqrt()?;
             if d.n == 0 {
-                Ok(if x.sign == DECIMAL_SIGN_NEG { HALF_PI.inv_sign() } else { HALF_PI })
+                Ok(if x.sign == DECIMAL_SIGN_NEG {
+                    HALF_PI.inv_sign()
+                } else {
+                    HALF_PI
+                })
             } else {
                 let arg = x.div(&d)?;
                 arg.atan()
@@ -178,10 +182,10 @@ impl BigFloatInc {
         if x_one_cmp > 0 {
             x = one.div(&x)?;
             if x.n == 0 {
-                return Ok(if self.sign == DECIMAL_SIGN_NEG { 
-                    HALF_PI.inv_sign() 
-                } else { 
-                    HALF_PI 
+                return Ok(if self.sign == DECIMAL_SIGN_NEG {
+                    HALF_PI.inv_sign()
+                } else {
+                    HALF_PI
                 });
             }
             inverse_arg = true;
@@ -208,7 +212,7 @@ impl BigFloatInc {
                 break;
             }
             ret = val;
-            assert!(i != ATAN_VALUES1.len()-2);
+            assert!(i != ATAN_VALUES1.len() - 2);
         }
 
         ret = ret.add(&atan_s)?;
@@ -221,8 +225,7 @@ impl BigFloatInc {
         Ok(ret)
     }
 
-
-    // sin: q=0, cos: q=1; 
+    // sin: q=0, cos: q=1;
     fn sin_cos(&self, q: usize) -> Result<Self, Error> {
         // calculation:
         // x = s + dx, x is in [0, pi/2)
@@ -248,7 +251,7 @@ impl BigFloatInc {
         let (idx, dx) = Self::get_trig_params(&mut x, 1);
 
         // determine closest precomputed values of derivatives
-        let mut s = [Self::new(), Self::new(), Self::new(), Self::new(),];
+        let mut s = [Self::new(), Self::new(), Self::new(), Self::new()];
         s[0] = SIN_VALUES1[idx];
         s[1] = SIN_VALUES2[idx];
         s[2] = s[0];
@@ -286,7 +289,11 @@ impl BigFloatInc {
             ret.sign *= self.sign;
         }
         if ret.abs().cmp(&one) > 0 {
-            ret = if ret.sign == DECIMAL_SIGN_NEG { one.inv_sign() } else { one };
+            ret = if ret.sign == DECIMAL_SIGN_NEG {
+                one.inv_sign()
+            } else {
+                one
+            };
         }
         Ok(ret)
     }

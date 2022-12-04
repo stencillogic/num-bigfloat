@@ -1,16 +1,15 @@
 //! Utility functions.
 
-use crate::inc::inc::BigFloatInc;
-use crate::RoundingMode;
-use crate::defs::DECIMAL_MIN_EXPONENT;
-use crate::defs::DECIMAL_BASE_LOG10;
 use crate::defs::DECIMAL_BASE;
+use crate::defs::DECIMAL_BASE_LOG10;
+use crate::defs::DECIMAL_MIN_EXPONENT;
 use crate::defs::DECIMAL_SIGN_POS;
-use crate::inc::inc::DECIMAL_POSITIONS;
+use crate::inc::inc::BigFloatInc;
 use crate::inc::inc::DECIMAL_PARTS;
+use crate::inc::inc::DECIMAL_POSITIONS;
+use crate::RoundingMode;
 
 impl BigFloatInc {
-
     // compare absolute values of two big floats
     // return positive if d1 > d2, negative if d1 < d2, 0 otherwise
     pub(super) fn abs_cmp(d1: &[i16], d2: &[i16]) -> i16 {
@@ -23,7 +22,6 @@ impl BigFloatInc {
         }
         0
     }
-
 
     // shift m to the right by n digits
     pub(super) fn shift_right(m: &mut [i16], mut n: usize) {
@@ -135,7 +133,7 @@ impl BigFloatInc {
         d3[DECIMAL_PARTS] = (m / DECIMAL_BASE as i32) as i16;
     }
 
-    // fractional part of d1 
+    // fractional part of d1
     pub(super) fn extract_fract_part(d1: &Self) -> Self {
         let mut fractional = Self::new();
         let e = -(d1.e as i16);
@@ -145,7 +143,8 @@ impl BigFloatInc {
         } else if e > 0 {
             let mut i = 0;
             while i + (DECIMAL_BASE_LOG10 as i16) <= e {
-                fractional.m[i as usize / DECIMAL_BASE_LOG10] = d1.m[i as usize / DECIMAL_BASE_LOG10];
+                fractional.m[i as usize / DECIMAL_BASE_LOG10] =
+                    d1.m[i as usize / DECIMAL_BASE_LOG10];
                 i += DECIMAL_BASE_LOG10 as i16;
             }
             if i < e {
@@ -154,7 +153,8 @@ impl BigFloatInc {
                     t *= 10;
                     i += 1;
                 }
-                fractional.m[i as usize / DECIMAL_BASE_LOG10] += d1.m[i as usize / DECIMAL_BASE_LOG10 as usize] % t;
+                fractional.m[i as usize / DECIMAL_BASE_LOG10] +=
+                    d1.m[i as usize / DECIMAL_BASE_LOG10 as usize] % t;
             }
             fractional.n = Self::num_digits(&fractional.m);
             if fractional.n > 0 {
@@ -180,7 +180,8 @@ impl BigFloatInc {
         }
         let mut t2 = 1;
         while i < d1.n {
-            int.m[int.n as usize / DECIMAL_BASE_LOG10] += (d1.m[i as usize / DECIMAL_BASE_LOG10 as usize] / t % 10) * t2;
+            int.m[int.n as usize / DECIMAL_BASE_LOG10] +=
+                (d1.m[i as usize / DECIMAL_BASE_LOG10 as usize] / t % 10) * t2;
             int.n += 1;
             i += 1;
             t *= 10;
@@ -218,19 +219,18 @@ impl BigFloatInc {
 
         // x = s + dx
         if i < DECIMAL_BASE_LOG10 as i32 {
-            idx = x.m[DECIMAL_PARTS-1] as usize;
+            idx = x.m[DECIMAL_PARTS - 1] as usize;
             let mut m = 1;
             while i > 0 {
                 idx /= 10;
                 i -= 1;
                 m *= 10;
             }
-            dx.m[DECIMAL_PARTS-1] = x.m[DECIMAL_PARTS-1] % m;
+            dx.m[DECIMAL_PARTS - 1] = x.m[DECIMAL_PARTS - 1] % m;
             dx.n = Self::num_digits(&dx.m);
         }
         (idx, dx)
     }
-
 
     /// If exponent is too small try to present number in subnormal form.
     /// If not successful, then return 0.0
@@ -248,12 +248,15 @@ impl BigFloatInc {
         }
     }
 
-
     // Round n positons to even, return true if exponent is to be incremented.
-    pub(crate) fn round_mantissa(m: &mut [i16], n: i16, rm: RoundingMode, is_positive: bool) -> bool {
-
+    pub(crate) fn round_mantissa(
+        m: &mut [i16],
+        n: i16,
+        rm: RoundingMode,
+        is_positive: bool,
+    ) -> bool {
         if n > 0 && n <= DECIMAL_POSITIONS as i16 {
-            let n = n-1;
+            let n = n - 1;
             let mut rem_zero = true;
             // anything before n'th digit becomes 0
             for i in 0..n as usize / DECIMAL_BASE_LOG10 {
@@ -276,41 +279,49 @@ impl BigFloatInc {
                 rem_zero = false;
             }
 
-            let num2 = if i1 < m.len() {
-                m[i1] / t2 % 10
-            } else {
-                0
-            };
+            let num2 = if i1 < m.len() { m[i1] / t2 % 10 } else { 0 };
 
             let eq5 = num == 5 && rem_zero;
             let gt5 = num > 5 || (num == 5 && !rem_zero);
             let gte5 = gt5 || eq5;
 
             match rm {
-                RoundingMode::Up => if gte5 && is_positive || gt5 && !is_positive {
-                    // add 1
-                    c = true;
-                },
-                RoundingMode::Down => if gt5 && is_positive || gte5 && !is_positive {
-                    // add 1
-                    c = true;
-                },
-                RoundingMode::FromZero => if gte5 {
-                    // add 1
-                    c = true;
-                },
-                RoundingMode::ToZero => if gt5 {
-                    // add 1
-                    c = true;
-                },
-                RoundingMode::ToEven => if gt5 || (eq5 && num2 & 1 != 0) {
-                    // add 1
-                    c = true;
-                },
-                RoundingMode::ToOdd => if gt5 || (eq5 && num2 & 1 == 0) {
-                    // add 1
-                    c = true;
-                },
+                RoundingMode::Up => {
+                    if gte5 && is_positive || gt5 && !is_positive {
+                        // add 1
+                        c = true;
+                    }
+                }
+                RoundingMode::Down => {
+                    if gt5 && is_positive || gte5 && !is_positive {
+                        // add 1
+                        c = true;
+                    }
+                }
+                RoundingMode::FromZero => {
+                    if gte5 {
+                        // add 1
+                        c = true;
+                    }
+                }
+                RoundingMode::ToZero => {
+                    if gt5 {
+                        // add 1
+                        c = true;
+                    }
+                }
+                RoundingMode::ToEven => {
+                    if gt5 || (eq5 && num2 & 1 != 0) {
+                        // add 1
+                        c = true;
+                    }
+                }
+                RoundingMode::ToOdd => {
+                    if gt5 || (eq5 && num2 & 1 == 0) {
+                        // add 1
+                        c = true;
+                    }
+                }
             };
 
             if c {
@@ -343,7 +354,7 @@ impl BigFloatInc {
                 return true;
             } else {
                 // just remove trailing digits
-                let t = t*10;
+                let t = t * 10;
                 m[i] = (m[i] / t) * t;
             }
         }
@@ -355,7 +366,7 @@ impl BigFloatInc {
         if self.n < DECIMAL_POSITIONS as i16 {
             let mut shift = DECIMAL_POSITIONS - self.n as usize;
             if shift > (self.e as i32 - DECIMAL_MIN_EXPONENT as i32) as usize {
-                shift = (self.e - DECIMAL_MIN_EXPONENT) as usize; 
+                shift = (self.e - DECIMAL_MIN_EXPONENT) as usize;
             }
             if shift > 0 {
                 Self::shift_left(&mut self.m, shift);
@@ -364,7 +375,6 @@ impl BigFloatInc {
             }
         }
     }
-
 
     /// Return fractional part of number with positive sign.
     pub fn get_fractional_part(&self) -> Self {
@@ -376,7 +386,8 @@ impl BigFloatInc {
         } else if e > 0 {
             let mut i = 0;
             while i + (DECIMAL_BASE_LOG10 as i16) <= e {
-                fractional.m[i as usize / DECIMAL_BASE_LOG10] = self.m[i as usize / DECIMAL_BASE_LOG10];
+                fractional.m[i as usize / DECIMAL_BASE_LOG10] =
+                    self.m[i as usize / DECIMAL_BASE_LOG10];
                 i += DECIMAL_BASE_LOG10 as i16;
             }
             if i < e {
@@ -385,7 +396,8 @@ impl BigFloatInc {
                     t *= 10;
                     i += 1;
                 }
-                fractional.m[i as usize / DECIMAL_BASE_LOG10] += self.m[i as usize / DECIMAL_BASE_LOG10 as usize] % t;
+                fractional.m[i as usize / DECIMAL_BASE_LOG10] +=
+                    self.m[i as usize / DECIMAL_BASE_LOG10 as usize] % t;
             }
             fractional.n = Self::num_digits(&fractional.m);
             if fractional.n > 0 {
@@ -395,4 +407,3 @@ impl BigFloatInc {
         fractional
     }
 }
-

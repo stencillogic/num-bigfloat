@@ -3,9 +3,7 @@
 use crate::defs::BigFloatNum;
 use crate::defs::Error;
 
-
 impl BigFloatNum {
-
     /// Return cube root of a number.
     pub fn cbrt(&self) -> Result<Self, Error> {
         let arg = Self::to_big_float_inc(self);
@@ -14,32 +12,32 @@ impl BigFloatNum {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
 
     use super::*;
-    use crate::defs::{DECIMAL_POSITIONS, DECIMAL_SIGN_NEG, DECIMAL_SIGN_POS, DECIMAL_MIN_EXPONENT};
+    use crate::defs::{
+        DECIMAL_MIN_EXPONENT, DECIMAL_POSITIONS, DECIMAL_SIGN_NEG, DECIMAL_SIGN_POS,
+    };
 
     #[test]
     fn test_cbrt() {
+        let mut d1;
 
-        let mut d1 ;
-        
         let one = BigFloatNum::one();
         let mut epsilon = BigFloatNum::one();
-        epsilon.e = - epsilon.n as i8 + 2 - (DECIMAL_POSITIONS as i8);
+        epsilon.e = -epsilon.n as i8 + 2 - (DECIMAL_POSITIONS as i8);
 
-/*
-        for i in 0..11 {
-            for j in 1..100 {
-                let mut d = crate::inc::inc::BigFloatInc::new();
-                d.m[i] = j*100;
-                d.n = crate::inc::inc::BigFloatInc::num_digits(&d.m);
-                let ret = d.cbrt().unwrap();
-            }
-        }
-*/
+        /*
+                for i in 0..11 {
+                    for j in 1..100 {
+                        let mut d = crate::inc::inc::BigFloatInc::new();
+                        d.m[i] = j*100;
+                        d.n = crate::inc::inc::BigFloatInc::num_digits(&d.m);
+                        let ret = d.cbrt().unwrap();
+                    }
+                }
+        */
         // 0
         d1 = BigFloatNum::new();
         assert!(d1.cbrt().unwrap().n == 0);
@@ -78,7 +76,7 @@ mod tests {
         let ret = d1.cbrt().unwrap();
         let ret = ret.mul(&ret).unwrap().mul(&ret).unwrap();
         assert!(ret.div(&d2).unwrap().sub(&one).unwrap().abs().cmp(&epsilon) <= 0);
-        
+
         d1.sign = DECIMAL_SIGN_NEG;
         let d2 = d1;
         let ret = d1.cbrt().unwrap();
@@ -111,11 +109,19 @@ mod tests {
         d1.m[9] = 0;
         d1.n = 32;
         d1.e = -38;
-        epsilon.e = - epsilon.n as i8 + 3 - (DECIMAL_POSITIONS as i8);
+        epsilon.e = -epsilon.n as i8 + 3 - (DECIMAL_POSITIONS as i8);
         for i in 1..8000 {
-            d1.m[8] = 10+i;
+            d1.m[8] = 10 + i;
             d1.m[9] = i;
-            d1.n = if i < 10 {1} else if i<100 {2} else if i<1000 {3} else {4} + 36;
+            d1.n = if i < 10 {
+                1
+            } else if i < 100 {
+                2
+            } else if i < 1000 {
+                3
+            } else {
+                4
+            } + 36;
             ret = d1.cbrt().unwrap();
             ret = ret.mul(&ret).unwrap().mul(&ret).unwrap();
             assert!(ret.div(&d1).unwrap().sub(&one).unwrap().abs().cmp(&epsilon) <= 0);

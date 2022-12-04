@@ -1,18 +1,16 @@
 //! Addition and subtraction.
 
-use crate::RoundingMode;
-use crate::inc::inc::BigFloatInc;
 use crate::defs::Error;
+use crate::defs::DECIMAL_BASE;
+use crate::defs::DECIMAL_MAX_EXPONENT;
+use crate::defs::DECIMAL_SIGN_POS;
+use crate::inc::inc::BigFloatInc;
 use crate::inc::inc::DECIMAL_PARTS;
 use crate::inc::inc::DECIMAL_POSITIONS;
-use crate::defs::DECIMAL_BASE;
-use crate::defs::DECIMAL_SIGN_POS;
-use crate::defs::DECIMAL_MAX_EXPONENT;
 use crate::inc::inc::ZEROED_MANTISSA;
-
+use crate::RoundingMode;
 
 impl BigFloatInc {
-
     /// Add d2 and return result of addition.
     ///
     /// # Errors
@@ -59,11 +57,11 @@ impl BigFloatInc {
         // assign d1 and d2 to n1 and n2 such that n1 has more significant digits than n2
         // (we want to save more digits while not sacrificing any significant digits)
         if self.e as i32 + (self.n as i32) < d2.e as i32 + d2.n as i32 {
-            n1 = if op < 0 {d2.inv_sign()} else {*d2};
+            n1 = if op < 0 { d2.inv_sign() } else { *d2 };
             n2 = *self;
         } else {
             n1 = *self;
-            n2 = if op < 0 {d2.inv_sign()} else {*d2};
+            n2 = if op < 0 { d2.inv_sign() } else { *d2 };
         }
         shift = n1.e as i32 - n2.e as i32;
         e = n1.e as i32;
@@ -81,7 +79,12 @@ impl BigFloatInc {
                     if free > 0 {
                         Self::shift_left(&mut n1.m, free as usize);
                     }
-                    let actual_shift = if Self::round_mantissa(&mut n2.m, (shift - free) as i16, RoundingMode::ToEven, true) {
+                    let actual_shift = if Self::round_mantissa(
+                        &mut n2.m,
+                        (shift - free) as i16,
+                        RoundingMode::ToEven,
+                        true,
+                    ) {
                         (shift - free) as usize - 1
                     } else {
                         (shift - free) as usize

@@ -3,9 +3,7 @@
 use crate::defs::BigFloatNum;
 use crate::defs::Error;
 
-
 impl BigFloatNum {
-
     /// Add d2 and return result of addition.
     ///
     /// # Errors
@@ -31,7 +29,6 @@ impl BigFloatNum {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
 
@@ -40,10 +37,9 @@ mod tests {
 
     #[test]
     fn test_add() {
-
-        let mut d1 = BigFloatNum::new(); 
-        let mut d2 = BigFloatNum::new(); 
-        let mut d3: BigFloatNum; 
+        let mut d1 = BigFloatNum::new();
+        let mut d2 = BigFloatNum::new();
+        let mut d3: BigFloatNum;
         let mut ref_num = BigFloatNum::new();
 
         //
@@ -52,8 +48,7 @@ mod tests {
 
         d2.sign = DECIMAL_SIGN_POS;
         d1.sign = DECIMAL_SIGN_POS;
-        for i in 0..DECIMAL_PARTS
-        {
+        for i in 0..DECIMAL_PARTS {
             d1.m[i] = 9999;
             d2.m[i] = 0;
         }
@@ -133,8 +128,7 @@ mod tests {
         d1 = BigFloatNum::new();
         d2 = BigFloatNum::new();
 
-        for i in 0..DECIMAL_PARTS
-        {
+        for i in 0..DECIMAL_PARTS {
             d1.m[i] = 9999;
         }
         d1.n = DECIMAL_POSITIONS as i16;
@@ -157,9 +151,8 @@ mod tests {
         d3 = d1.add(&d2).unwrap();
         assert!(d3.cmp(&ref_num) == 0);
 
-        d1.e = 5;   // 0000 0022 2..2 2211 0000e+5 + 1122 3346e+3
-        for i in 0..DECIMAL_PARTS
-        {
+        d1.e = 5; // 0000 0022 2..2 2211 0000e+5 + 1122 3346e+3
+        for i in 0..DECIMAL_PARTS {
             ref_num.m[i] = 2222;
             d1.m[i] = 2222;
         }
@@ -179,7 +172,7 @@ mod tests {
         d3 = d1.add(&d2).unwrap();
         assert!(d3.cmp(&ref_num) == 0);
 
-        d1.m[DECIMAL_PARTS - 1] = 222;  // 0222 2..2 2211 0000e+5 + 1122 3346e+3
+        d1.m[DECIMAL_PARTS - 1] = 222; // 0222 2..2 2211 0000e+5 + 1122 3346e+3
         d1.m[DECIMAL_PARTS - 2] = 2222;
         d1.n = DECIMAL_POSITIONS as i16 - 1;
         ref_num.e = 4;
@@ -188,7 +181,6 @@ mod tests {
         ref_num.n = DECIMAL_POSITIONS as i16;
         d3 = d1.add(&d2).unwrap();
         assert!(d3.cmp(&ref_num) == 0);
-
 
         //
         // subtracton

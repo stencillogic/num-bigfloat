@@ -1,10 +1,10 @@
 //! Parser parses numbers represented in scientific format.
 
-#[cfg(feature = "std")]
-use std::str::Chars;
+use crate::defs::{DECIMAL_POSITIONS, DECIMAL_SIGN_NEG, DECIMAL_SIGN_POS};
 #[cfg(not(feature = "std"))]
 use core::str::Chars;
-use crate::defs::{DECIMAL_SIGN_POS, DECIMAL_SIGN_NEG, DECIMAL_POSITIONS};
+#[cfg(feature = "std")]
+use std::str::Chars;
 
 pub struct ParserState<'a> {
     chars: Chars<'a>,
@@ -33,7 +33,7 @@ impl<'a> ParserState<'a> {
         }
     }
 
-    /// Returns next character of a string in lower case, 
+    /// Returns next character of a string in lower case,
     /// or None if string end reached.
     fn next_char(&mut self) -> Option<char> {
         self.cur_ch = self.chars.next().map(|c| c.to_ascii_lowercase());
@@ -67,16 +67,19 @@ impl<'a> ParserState<'a> {
 }
 
 /// Parse BigFloat.
-pub fn parse(s: &str) -> ParserState<> {
+pub fn parse(s: &str) -> ParserState {
     let mut parser_state = ParserState::new(s);
     let mut ch = parser_state.next_char();
 
     // sign
     if let Some(c) = ch {
         match c {
-            '+' => { ch = parser_state.next_char() },
-            '-' => { parser_state.sign = DECIMAL_SIGN_NEG; ch = parser_state.next_char() },
-            _ => {},
+            '+' => ch = parser_state.next_char(),
+            '-' => {
+                parser_state.sign = DECIMAL_SIGN_NEG;
+                ch = parser_state.next_char()
+            }
+            _ => {}
         };
     }
 
@@ -84,13 +87,13 @@ pub fn parse(s: &str) -> ParserState<> {
         match c {
             'i' => parse_inf(&mut parser_state),
             'n' => parse_nan(&mut parser_state),
-            '.' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' => 
-                parse_num(&mut parser_state),
-            _ => {},
+            '.' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' => {
+                parse_num(&mut parser_state)
+            }
+            _ => {}
         };
     }
     parser_state
-
 }
 
 fn parse_inf(parser_state: &mut ParserState) {
@@ -144,7 +147,7 @@ fn parse_digits(parser_state: &mut ParserState, skip_zeroes: bool, int: bool) ->
             if c.is_ascii_digit() && c.to_digit(10).unwrap() == 0 {
                 skip_cnt += 1;
                 if !int {
-                    len += 1;   // for fractionl part count length
+                    len += 1; // for fractionl part count length
                 }
             } else {
                 break;
@@ -178,14 +181,19 @@ fn parse_exp(parser_state: &mut ParserState) {
     let mut ch = parser_state.cur_char();
     if let Some(c) = ch {
         match c {
-            '+' => { ch = parser_state.next_char(); },
-            '-' => { neg = true; ch = parser_state.next_char(); },
-            _ => { },
+            '+' => {
+                ch = parser_state.next_char();
+            }
+            '-' => {
+                neg = true;
+                ch = parser_state.next_char();
+            }
+            _ => {}
         };
     }
     while let Some(c) = ch {
         if c.is_ascii_digit() {
-            if parser_state.e >= i32::MAX/10 {
+            if parser_state.e >= i32::MAX / 10 {
                 break;
             }
             parser_state.e *= 10;
@@ -207,21 +215,47 @@ mod tests {
 
     #[test]
     pub fn test_parser() {
-
         let mut buf = [0u8; 64];
 
         // combinations of possible valid components of a number and expected resulting characteristics.
         let mantissas = ["0.0", "0", ".000", "00.", "00123", "456.", "789.012", ".3456", "0.0078"];
         let expected_mantissas = [
-            [0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, ],
-            [0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, ],
-            [0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, ],
-            [0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, ],
-            [1,2,3,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, ],
-            [4,5,6,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, ],
-            [7,8,9,0,1,2,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, ],
-            [3,4,5,6,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, ],
-            [7,8,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, ],
+            [
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            ],
+            [
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            ],
+            [
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            ],
+            [
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            ],
+            [
+                1, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            ],
+            [
+                4, 5, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            ],
+            [
+                7, 8, 9, 0, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            ],
+            [
+                3, 4, 5, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            ],
+            [
+                7, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            ],
         ];
         let expected_mantissa_len = [0, 0, 0, 0, 3, 3, 6, 4, 2];
         let expected_exp_shifts = [0, 0, 0, 0, -37, -37, -37, -40, -42];
@@ -229,7 +263,7 @@ mod tests {
         let signs = ["", "+", "-"];
         let expected_signs = [1, 1, -1];
 
-        let exponents = ["", "E", "e", "e123", "e+345", "e-678", "e901", "E+234", "E-567",];
+        let exponents = ["", "E", "e", "e123", "e+345", "e-678", "e901", "E+234", "E-567"];
         let expected_exponents = [0, 0, 0, 123, 345, -678, 901, 234, -567];
 
         let infs = ["inf", "INF", "Inf"];

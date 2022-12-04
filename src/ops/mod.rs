@@ -1,10 +1,10 @@
-mod util;
-pub mod other;
 pub mod add;
-pub mod mul;
 pub mod cbrt;
-pub mod sqrt;
-pub mod pow;
 pub mod log;
+pub mod mul;
+pub mod other;
+pub mod pow;
+pub mod sqrt;
 pub mod trig;
 pub mod trigh;
+mod util;

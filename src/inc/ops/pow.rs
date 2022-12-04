@@ -1,20 +1,17 @@
 //! Power.
 
+use crate::defs::Error;
+use crate::defs::DECIMAL_BASE;
+use crate::defs::DECIMAL_BASE_LOG10;
+use crate::defs::DECIMAL_SIGN_NEG;
+use crate::defs::DECIMAL_SIGN_POS;
 use crate::inc::inc::BigFloatInc;
+use crate::inc::inc::DECIMAL_PARTS;
 use crate::inc::ops::tables::exp_const::EXP_VALUES;
 use crate::inc::ops::tables::exp_const::EXP_VALUES2;
 use crate::inc::ops::tables::fact_const::INVFACT_VALUES;
-use crate::defs::Error;
-use crate::inc::inc::DECIMAL_PARTS;
-use crate::defs::DECIMAL_BASE_LOG10;
-use crate::defs::DECIMAL_BASE;
-use crate::defs::DECIMAL_SIGN_NEG;
-use crate::defs::DECIMAL_SIGN_POS;
-
 
 impl BigFloatInc {
-
-
     /// Return BigFloatInc to the power of `d1`.
     ///
     /// # Errors
@@ -76,12 +73,13 @@ impl BigFloatInc {
     fn result_inversion(r: Result<Self, Error>, conv: bool, base_sign: i8) -> Result<Self, Error> {
         match r {
             Ok(v) => Ok(v),
-            Err(Error::ExponentOverflow(_)) => 
+            Err(Error::ExponentOverflow(_)) => {
                 if conv {
                     Ok(Self::new())
                 } else {
                     Err(Error::ExponentOverflow(base_sign))
-                },
+                }
+            }
             Err(Error::DivisionByZero) => Err(Error::ExponentOverflow(base_sign)),
             Err(e) => Err(e),
         }
