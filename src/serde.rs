@@ -59,6 +59,7 @@ pub mod str {
         }
     }
 
+    /// Serialize `f` to a string using given serializer.
     pub fn serialize<S>(f: &BigFloat, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -75,6 +76,7 @@ pub mod str {
         serializer.serialize_str(s)
     }
 
+    /// Deserialize BigFloat from a string using given deserializer.
     pub fn deserialize<'de, D>(deserializer: D) -> Result<BigFloat, D::Error>
     where
         D: Deserializer<'de>,

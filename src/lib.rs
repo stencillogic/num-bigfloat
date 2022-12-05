@@ -60,6 +60,7 @@
 //!
 //! In addition, the library implements [num-traits](https://crates.io/crates/num_traits). Dependency on `num-traits` can be excluded by turning off `num-traits` feature.
 
+#![deny(missing_docs)]
 #![deny(clippy::suspicious)]
 #![cfg_attr(not(feature = "std"), no_std)]
 

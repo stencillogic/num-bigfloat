@@ -1123,6 +1123,7 @@ impl BigFloat {
         ))
     }
 
+    /// Returns category of `self` as defined by `core::num::FpCategory`.
     pub fn classify(&self) -> FpCategory {
         match self.inner {
             Flavor::Value(v) => {
