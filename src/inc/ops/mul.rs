@@ -168,7 +168,7 @@ impl BigFloatInc {
             }
 
             let mut m3i = m3.iter_mut().rev();
-            let mut m1i = self.m[..j as usize + 1].iter().rev();
+            let mut m1i = self.m[..(j + 1) as usize].iter().rev();
             for m3v in m3i.by_ref() {
                 qh =
                     rh * DECIMAL_BASE as i32 + if j >= 0 { *m1i.next().unwrap() as i32 } else { 0 };
