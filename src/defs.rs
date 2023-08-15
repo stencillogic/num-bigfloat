@@ -81,7 +81,7 @@ pub enum Error {
     InvalidArgument,
 }
 
-/// Possible errors.
+/// Rounding modes.
 #[derive(Eq, PartialEq, Debug, Copy, Clone)]
 pub enum RoundingMode {
     /// Round half toward positive infinity.
