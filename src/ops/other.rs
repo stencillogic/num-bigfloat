@@ -215,7 +215,11 @@ mod tests {
 
         assert!(d1.cmp(&d2) == 0);
 
-        d1.m[0] = 1; // 1, 0
+        d1.sign = DECIMAL_SIGN_NEG; // -0 , 0
+        assert!(d1.cmp(&d2) == 0);
+
+        d1.sign = DECIMAL_SIGN_POS; // 1, 0
+        d1.m[0] = 1; 
         d1.n = 1;
         assert!(d1.cmp(&d2) > 0);
 
