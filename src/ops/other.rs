@@ -83,10 +83,6 @@ impl BigFloatNum {
     /// Compare to d2.
     /// Returns positive if self > d2, negative if self < d2, 0 otherwise.
     pub fn cmp(&self, d2: &Self) -> i16 {
-        if self.sign != d2.sign {
-            return self.sign as i16;
-        }
-
         if self.n == 0 || d2.n == 0 {
             if d2.n != 0 {
                 return -d2.sign as i16;
@@ -95,6 +91,10 @@ impl BigFloatNum {
             } else {
                 return 0;
             }
+        }
+
+        if self.sign != d2.sign {
+            return self.sign as i16;
         }
 
         let diff: i32 = self.e as i32 + self.n as i32 - d2.e as i32 - d2.n as i32;
@@ -215,7 +215,11 @@ mod tests {
 
         assert!(d1.cmp(&d2) == 0);
 
-        d1.m[0] = 1; // 1, 0
+        d1.sign = DECIMAL_SIGN_NEG; // -0 , 0
+        assert!(d1.cmp(&d2) == 0);
+
+        d1.sign = DECIMAL_SIGN_POS; // 1, 0
+        d1.m[0] = 1;
         d1.n = 1;
         assert!(d1.cmp(&d2) > 0);
 
