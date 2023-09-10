@@ -1,8 +1,13 @@
 ![Tests](https://github.com/stencillogic/num-bigfloat/workflows/Rust/badge.svg)
-![Minimum rustc version](https://img.shields.io/badge/rustc-1.62.1+-lightgray.svg)
+![Minimum rustc version](https://img.shields.io/badge/rustc-1.62.1+-blue.svg)
 
 
 Increased precision floating point numbers implemented purely in Rust. 
+
+## Arbitrary precision numbers
+
+**A fork of the library is available that implements floating-point numbers of arbitrary precision: [astro-float](https://github.com/stencillogic/astro-float).
+The new library uses more elaborate algorithms, has higher accuracy, and better test coverage.**
 
 ## Rationale
 
@@ -29,11 +34,6 @@ Number has fixed-size mantissa and exponent.
 ## no_std
 
 Library can be used without the standard Rust library. This can be achieved by turning off `std` feature.
-
-
-## Arbitrary precision numbers
-
-A fork of the library is available that implements floating-point numbers of arbitrary precision: [astro-float](https://github.com/stencillogic/astro-float)
 
 
 ## Performance
