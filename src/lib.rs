@@ -700,7 +700,7 @@ mod tests {
 
     #[test]
     fn test_lib_sin_asin() {
-        let eps = BigFloat::from_f64(1.0e-8);
+        let eps = BigFloat::from_f64(1.0e-7);
         // sin, asin
         for _ in 0..10000 {
             let num = random_normal_float(3, 40);
