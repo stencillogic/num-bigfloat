@@ -30,10 +30,6 @@ impl BigFloatInc {
     /// Compare to d2.
     /// Returns positive if self > d2, negative if self < d2, 0 otherwise.
     pub fn cmp(&self, d2: &Self) -> i16 {
-        if self.sign != d2.sign {
-            return self.sign as i16;
-        }
-
         if self.n == 0 || d2.n == 0 {
             if d2.n != 0 {
                 return -d2.sign as i16;
@@ -42,6 +38,10 @@ impl BigFloatInc {
             } else {
                 return 0;
             }
+        }
+
+        if self.sign != d2.sign {
+            return self.sign as i16;
         }
 
         let diff: i32 = self.e as i32 + self.n as i32 - d2.e as i32 - d2.n as i32;
