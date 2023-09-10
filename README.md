@@ -7,7 +7,7 @@ Increased precision floating point numbers implemented purely in Rust.
 ## Arbitrary precision numbers
 
 **A fork of the library is available that implements floating-point numbers of arbitrary precision: [astro-float](https://github.com/stencillogic/astro-float).
-The new library uses more elaborate algorithms, has higher accuracy, and better test coverage.**
+The new library uses more elaborate algorithms, has higher accuracy and better test coverage.**
 
 ## Rationale
 
