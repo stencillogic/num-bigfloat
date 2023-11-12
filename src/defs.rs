@@ -55,7 +55,7 @@ pub const U128_MAX: BigFloatNum = BigFloatNum {
 };
 
 /// Number representation.
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct BigFloatNum {
     pub(crate) sign: i8,                // sign

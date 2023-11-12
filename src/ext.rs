@@ -251,13 +251,13 @@ pub const RAD_TO_DEG_FACTOR: BigFloat = BigFloat {
 };
 
 /// Number representation.
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct BigFloat {
     inner: Flavor,
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 enum Flavor {
     Value(BigFloatNum),
