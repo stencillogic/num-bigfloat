@@ -1232,8 +1232,8 @@ mod tests {
     }
 
     fn random_f64_exp(exp_range: i32, exp_shift: i32) -> f64 {
-        let mut f: f64 = random();
-        f = f.powi(random::<i32>().abs() % exp_range - exp_shift);
+        let mut f: f64 = random::<f64>() + 1.0;
+        f *= 10.0f64.powi(random::<i32>().abs() % exp_range - exp_shift);
         if random::<i8>() & 1 == 0 {
             f = -f;
         }
