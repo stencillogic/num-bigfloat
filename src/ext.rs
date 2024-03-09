@@ -2173,6 +2173,11 @@ mod tests {
             BigFloat::from_u128(123456789012345678901234567890123456789)
                 == BigFloat::parse("1.23456789012345678901234567890123456789e+38").unwrap()
         );
+        // Regression Tests: If the number of leading zeros were equal to the number of remaining
+        // digits in the integral part, `parse` would always yield an exponent of 39.
+        assert!(ONE == BigFloat::parse("01").unwrap());
+        assert!(BigFloat::from_u32(987654321) == BigFloat::parse("000000000987654321.0").unwrap());
+        assert!(BigFloat::parse("9.9e-1") == BigFloat::parse("0099e-2"));
     }
 
     fn fmt_to_str<'a>(f: &BigFloat, buf: &'a mut [u8]) -> WritableBuf<'a> {

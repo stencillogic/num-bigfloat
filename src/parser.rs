@@ -169,7 +169,7 @@ fn parse_digits(parser_state: &mut ParserState, skip_zeroes: bool, int: bool) ->
         }
         ch = parser_state.next_char();
     }
-    if skip_cnt == len {
+    if !int && skip_cnt == len {
         // just zeroes
         len = 0;
     }
@@ -218,7 +218,8 @@ mod tests {
         let mut buf = [0u8; 64];
 
         // combinations of possible valid components of a number and expected resulting characteristics.
-        let mantissas = ["0.0", "0", ".000", "00.", "00123", "456.", "789.012", ".3456", "0.0078"];
+        let mantissas =
+            ["0.0", "0", ".000", "00.", "00123", "456.", "789.012", ".3456", "0.0078", "01"];
         let expected_mantissas = [
             [
                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -256,9 +257,13 @@ mod tests {
                 7, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             ],
+            [
+                1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            ],
         ];
-        let expected_mantissa_len = [0, 0, 0, 0, 3, 3, 6, 4, 2];
-        let expected_exp_shifts = [0, 0, 0, 0, -37, -37, -37, -40, -42];
+        let expected_mantissa_len = [0, 0, 0, 0, 3, 3, 6, 4, 2, 1];
+        let expected_exp_shifts = [0, 0, 0, 0, -37, -37, -37, -40, -42, -39];
 
         let signs = ["", "+", "-"];
         let expected_signs = [1, 1, -1];
