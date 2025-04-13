@@ -1601,7 +1601,7 @@ macro_rules! impl_int_conv {
             /// Construct BigFloat from integer value.
             pub fn $from_s(i: $s) -> Self {
                 let sign = if i < 0 { DECIMAL_SIGN_NEG } else { DECIMAL_SIGN_POS };
-                Self::$from_int(i.abs() as $u, sign)
+                Self::$from_int(i.unsigned_abs(), sign)
             }
 
             /// Construct BigFloat from integer value.
@@ -2051,6 +2051,8 @@ mod tests {
         assert!(INF_NEG.atan().cmp(&HALF_PI.inv_sign()) == Some(0));
         assert!(INF_POS.atan().cmp(&HALF_PI) == Some(0));
         assert!(NAN.atan().is_nan());
+        assert!((-ONE).atan().is_negative());
+        assert!(ONE.atan().is_positive());
 
         assert!(INF_NEG.sinh().is_inf_neg());
         assert!(INF_POS.sinh().is_inf_pos());
