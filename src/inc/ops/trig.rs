@@ -186,7 +186,9 @@ impl BigFloatInc {
             }
             inverse_arg = true;
         } else if x_one_cmp == 0 {
-            return Ok(ATAN_VALUES2[10000]);
+            let mut ret = ATAN_VALUES2[10000];
+            ret.sign = self.sign;
+            return Ok(ret);
         }
 
         // further reduction: arctan(x) = arctan(s) + arctan((x - s) / (1 + x*s))
